@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { 
   BarChart3, 
   PhoneCall, 
@@ -8,10 +10,37 @@ import {
   UserCheck,
   Zap,
   PackageCheck,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from "lucide-react";
 
 export default function AdminDashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data: stats } = await axios.get("/api/admin/stats");
+        setData(stats);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) {
+     return (
+        <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+           <Loader2 className="animate-spin text-blue-600" size={60} />
+           <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Initialising Core Engine...</div>
+        </div>
+     );
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20 animate-in fade-in duration-1000">
@@ -39,10 +68,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-20">
-         <AdminStat icon={<PhoneCall size={24}/>} label="NEW LEADS" value="84" delta="+12%" color="blue" />
-         <AdminStat icon={<PackageCheck size={24}/>} label="APPOINTMENTS" value="156" delta="+4.2%" color="indigo" />
-         <AdminStat icon={<CheckCircle size={24}/>} label="CONVERSIONS" value="68" delta="+18.5%" color="emerald" />
-         <AdminStat icon={<AlertTriangle size={24}/>} label="FAILURES" value="03" delta="-2.1%" color="rose" />
+         <AdminStat icon={<PhoneCall size={24}/>} label="NEW LEADS" value={data?.leads || "0"} delta="+12%" color="blue" />
+         <AdminStat icon={<PackageCheck size={24}/>} label="APPOINTMENTS" value={data?.appointments || "0"} delta="+4.2%" color="indigo" />
+         <AdminStat icon={<CheckCircle size={24}/>} label="CONVERSIONS" value={data?.conversions || "0"} delta="+18.5%" color="emerald" />
+         <AdminStat icon={<AlertTriangle size={24}/>} label="FAILURES" value={data?.failures || "0"} delta="-2.1%" color="rose" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -67,10 +96,15 @@ export default function AdminDashboard() {
                      </tr>
                   </thead>
                   <tbody>
-                     <LeadRow name="Rahul Sharma" phone="+91 99999 00001" service="AC REPAIR" status="NEW" />
-                     <LeadRow name="Anjali Mittal" phone="+91 88888 11111" service="RO FILTER" status="CONTACTED" />
-                     <LeadRow name="Vikram Singh" phone="+91 77777 22222" service="DEEP CLEANING" status="CONVERTED" />
-                     <LeadRow name="Sonia Gandhi" phone="+91 66666 33333" service="AC SERVICE" status="NEW" />
+                     {data?.recentLeads?.length > 0 ? (
+                        data.recentLeads.map((lead: any) => (
+                           <LeadRow key={lead._id} name={lead.name} phone={lead.phone} service={lead.serviceType} status={lead.status || "NEW"} />
+                        ))
+                     ) : (
+                        <tr>
+                           <td colSpan={4} className="px-10 py-10 text-center text-gray-500 text-xs font-black uppercase tracking-widest italic">No operational data detected in registry.</td>
+                        </tr>
+                     )}
                   </tbody>
                </table>
             </div>
@@ -83,9 +117,13 @@ export default function AdminDashboard() {
                 <span>UNIT OPERATORS</span>
              </h3>
              <div className="space-y-6">
-                 <TechCard name="Amit Sharma" type="AC SPECIALIST" status="ACTIVE" />
-                 <TechCard name="Karan Singh" type="RO ENGINEER" status="BUSY" />
-                 <TechCard name="Mohit Verma" type="HOUSE KEEPER" status="OFFLINE" />
+                  {data?.technicians?.length > 0 ? (
+                     data.technicians.map((tech: any, idx: number) => (
+                        <TechCard key={idx} name={tech.name} type={tech.type} status={tech.status} />
+                     ))
+                  ) : (
+                     <div className="p-8 text-center bg-white/5 rounded-3xl text-gray-500 font-black uppercase tracking-widest text-[10px] italic">No active units registered.</div>
+                  )}
              </div>
              
              <button className="w-full py-6 bg-white/5 border border-white/10 rounded-[2rem] font-black text-[10px] tracking-[0.4em] uppercase text-gray-400 hover:bg-white hover:text-black hover:border-white transition-all duration-300">
@@ -123,6 +161,8 @@ function LeadRow({ name, phone, service, status }: any) {
       NEW: "text-blue-500 bg-blue-500/10 border-blue-500/20",
       CONTACTED: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
       CONVERTED: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+      QUALIFIED: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+      ARCHIVED: "text-gray-500 bg-gray-500/10 border-gray-500/20",
    };
    return (
       <tr className="border-t border-white/5 group hover:bg-white/5 transition-colors">
@@ -130,9 +170,9 @@ function LeadRow({ name, phone, service, status }: any) {
             <div className="font-extrabold text-white text-lg tracking-tight mb-1">{name}</div>
             <div className="text-[10px] font-bold text-gray-500 tracking-widest">{phone}</div>
          </td>
-         <td className="px-10 py-8 font-black text-[11px] text-indigo-400 tracking-widest">{service}</td>
+         <td className="px-10 py-8 font-black text-[11px] text-indigo-400 tracking-widest">{service || "GENERAL REPAIR"}</td>
          <td className="px-10 py-8">
-            <span className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest border ${statusMap[status]}`}>
+            <span className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest border ${statusMap[status] || statusMap["NEW"]}`}>
                {status}
             </span>
          </td>
@@ -153,10 +193,10 @@ function TechCard({ name, type, status }: any) {
       <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] flex items-center justify-between group hover:bg-white/10 transition-all cursor-pointer">
          <div className="flex items-center space-x-5">
             <div className="relative">
-               <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center font-black text-white text-xl">
-                  {name[0]}
+               <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center font-black text-white text-xl uppercase">
+                  {name ? name[0] : "O"}
                </div>
-               <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-gray-900 ${statusMap[status]}`} />
+               <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-gray-900 ${statusMap[status] || statusMap["OFFLINE"]}`} />
             </div>
             <div>
                <div className="font-extrabold text-white mb-0.5">{name}</div>

@@ -57,6 +57,13 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // If the url is relative (from pages/middleware), use it
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // If the url is already pointing elsewhere, use the base instead if it's external, or honor it if it's internal
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
   pages: {
     signIn: "/login",

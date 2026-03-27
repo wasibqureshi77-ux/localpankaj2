@@ -44,40 +44,16 @@ const LoginFormContent = ({ title, subtitle, redirectTo, role }: LoginFormProps)
     setLoading(true);
 
     try {
-      const res = await signIn("credentials", {
-        redirect: false,
+      // Use NextAuth native redirect handling for maximum stability on live servers
+      await signIn("credentials", {
+        redirect: true,
         email,
         password,
+        callbackUrl: callbackUrl || redirectTo,
       });
-
-      if (res?.error) {
-        toast.error(res.error || "Invalid login credentials.");
-      } else {
-        toast.success("Login successful! Redirecting...");
-        
-        // Brief delay for session propagation
-        setTimeout(async () => {
-          const sessionRes = await fetch('/api/auth/session');
-          const session = await sessionRes.json();
-          const userRole = session?.user?.role;
-
-          if (callbackUrl) {
-            window.location.href = callbackUrl;
-            return;
-          }
-
-          if (userRole === "ADMIN" || userRole === "MANAGER") {
-            window.location.href = "/super-admin";
-          } else if (userRole === "EDITOR") {
-            window.location.href = "/editor";
-          } else {
-            window.location.href = "/dashboard";
-          }
-        }, 500);
-      }
+      // Note: With redirect: true, signIn doesn't return (it navigates away)
     } catch (error) {
       toast.error("An error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
