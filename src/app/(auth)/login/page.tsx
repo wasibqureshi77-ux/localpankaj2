@@ -22,7 +22,7 @@ export default function UserLoginPage() {
         title="Welcome Back!"
         subtitle="Sign in to manage your bookings and track requests."
         redirectTo="/dashboard"
-        role="USER"
+        requiredRole="USER"
       />
     </div>
   );

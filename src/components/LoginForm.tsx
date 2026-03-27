@@ -9,7 +9,7 @@ interface LoginFormProps {
   title: string;
   subtitle: string;
   redirectTo: string;
-  role?: string;
+  requiredRole?: "USER" | "ADMIN" | "EDITOR" | "MANAGER";
 }
 
 function LoadingSpinner() {
@@ -31,7 +31,7 @@ const loginStyles = {
   button: "w-full py-5 bg-blue-600 text-white rounded-xl font-extrabold text-lg hover:bg-blue-700 transition shadow-xl shadow-blue-500/20 transform hover:-translate-y-1 flex items-center justify-center space-x-3"
 };
 
-const LoginFormContent = ({ title, subtitle, redirectTo, role }: LoginFormProps) => {
+const LoginFormContent = ({ title, subtitle, redirectTo, requiredRole }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,16 +44,49 @@ const LoginFormContent = ({ title, subtitle, redirectTo, role }: LoginFormProps)
     setLoading(true);
 
     try {
-      // Use NextAuth native redirect handling for maximum stability on live servers
-      await signIn("credentials", {
-        redirect: true,
+      const res = await signIn("credentials", {
+        redirect: false,
         email,
         password,
-        callbackUrl: callbackUrl || redirectTo,
       });
-      // Note: With redirect: true, signIn doesn't return (it navigates away)
+
+      if (res?.error) {
+        toast.error(res.error || "Authentication failed.");
+        setLoading(false);
+      } else {
+        // Fetch session to verify role requirement
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+        const userRole = session?.user?.role;
+
+        // SEPARATE LOGIN ROLE ENFORCEMENT
+        if (requiredRole) {
+           if (requiredRole === "ADMIN" || requiredRole === "MANAGER") {
+              if (userRole !== "ADMIN" && userRole !== "MANAGER") {
+                 toast.error("Access Denied: Admin credentials required.");
+                 setLoading(false);
+                 return;
+              }
+           } else if (userRole !== requiredRole) {
+              toast.error(`Access Denied: ${requiredRole} credentials required.`);
+              setLoading(false);
+              return;
+           }
+        }
+
+        toast.success("Identity Verified. Redirecting...");
+        
+        // Final redirection based on intended purpose
+        setTimeout(() => {
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
+          } else {
+            window.location.href = redirectTo;
+          }
+        }, 300);
+      }
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      toast.error("Critical identity sync error. Try again.");
       setLoading(false);
     }
   };
@@ -115,7 +148,7 @@ const LoginFormContent = ({ title, subtitle, redirectTo, role }: LoginFormProps)
         </button>
       </form>
       
-      {role === "USER" && (
+      {requiredRole === "USER" && (
         <div className="mt-8 pt-8 border-t border-gray-100 text-center">
             <p className="text-gray-500 font-medium text-sm mb-4">New to Local Pankaj?</p>
             <button 

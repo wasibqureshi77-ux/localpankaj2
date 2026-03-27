@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
         title="Admin Access"
         subtitle="Secure login for Administrators and Managers."
         redirectTo="/super-admin"
-        role="ADMIN"
+        requiredRole="ADMIN"
       />
     </div>
   );

@@ -25,7 +25,7 @@ export default function EditorLoginPage() {
         title="Editor Hub"
         subtitle="Secure login for Site Content Editors."
         redirectTo="/editor"
-        role="EDITOR"
+        requiredRole="EDITOR"
       />
     </div>
   );
