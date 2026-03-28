@@ -6,25 +6,35 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
-    // 1. SUPER ADMIN PROTECTION
+    // DEBUG LOGS (PRODUCTION VISIBLE IN SERVER LOGS)
+    console.log(`[AUTH MIDDLEWARE] Path: ${pathname} | Token Role: ${token?.role || "NONE"}`);
+
+    // If no token at all, withAuth will handle redirect unless it's in public list
+    if (!token) return NextResponse.next();
+
+    // 1. SUPER ADMIN PROTECTION (ADMIN, MANAGER ONLY)
     if (pathname.startsWith("/super-admin") && pathname !== "/super-admin/login") {
-      if (!token || (token.role !== "ADMIN" && token.role !== "MANAGER")) {
-        return NextResponse.redirect(new URL("/super-admin/login", req.url));
+      const role = token.role;
+      if (role !== "ADMIN" && role !== "MANAGER") {
+         console.warn(`[AUTH] Access denied to admin area for role: ${role}`);
+         return NextResponse.redirect(new URL("/super-admin/login", req.url));
       }
     }
 
-    // 2. EDITOR PROTECTION
+    // 2. EDITOR PROTECTION (EDITOR ONLY)
     if (pathname.startsWith("/editor") && pathname !== "/editor/login") {
-      if (!token || token.role !== "EDITOR") {
-        return NextResponse.redirect(new URL("/editor/login", req.url));
+      const role = token.role;
+      if (role !== "EDITOR") {
+         console.warn(`[AUTH] Access denied to editor area for role: ${role}`);
+         return NextResponse.redirect(new URL("/editor/login", req.url));
       }
     }
 
     // 3. USER DASHBOARD PROTECTION
     if (pathname.startsWith("/dashboard")) {
-      if (!token) {
-        return NextResponse.redirect(new URL("/login", req.url));
-      }
+       if (!token) {
+          return NextResponse.redirect(new URL("/login", req.url));
+       }
     }
 
     return NextResponse.next();
@@ -33,24 +43,34 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
-        // Allow public access to login pages and other non-protected routes
+        
+        // ALLOW PUBLIC ROUTES ALWAYS
         if (
+          pathname.startsWith("/api/auth") || 
+          pathname.startsWith("/_next") || 
+          pathname === "/login" || 
           pathname === "/super-admin/login" || 
-          pathname === "/editor/login" || 
-          pathname === "/login"
+          pathname === "/editor/login" ||
+          pathname === "/"
         ) {
           return true;
         }
-        // General check for all other matched paths
+
+        // REQUIRE TOKEN FOR MATCHED ROUTES
         return !!token;
       },
     },
     pages: {
       signIn: "/login",
+      error: "/auth-error",
     },
   }
 );
 
 export const config = {
-  matcher: ["/super-admin/:path*", "/editor/:path*", "/dashboard/:path*"],
+  matcher: [
+    "/super-admin/:path*", 
+    "/editor/:path*", 
+    "/dashboard/:path*"
+  ],
 };
