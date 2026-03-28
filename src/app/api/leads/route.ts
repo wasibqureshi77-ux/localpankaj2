@@ -53,8 +53,14 @@ export async function POST(req: Request) {
           message: `New service lead captured: <strong>${data.service}</strong>`,
           details: `
             Name: <strong>${data.name}</strong><br>
+            Email: <strong>${data.email || "N/A"}</strong><br>
             Phone: <strong>${data.phone}</strong><br>
-            Note: <strong>${data.note || "No notes"}</strong>
+            Service Plan: <strong>${data.servicePlan || "N/A"}</strong><br>
+            Price: <strong>${data.price || "N/A"}</strong><br>
+            Location: <strong>${data.city}, ${data.state} (${data.pincode})</strong><br>
+            Booking Date: <strong>${data.bookingDate}</strong><br>
+            Booking Time: <strong>${data.bookingTime}</strong><br>
+            Address: <strong>${data.address}</strong>
           `
         })
       });

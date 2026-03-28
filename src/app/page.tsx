@@ -13,6 +13,7 @@ import {
   UserCheck,
   Settings2
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadPopup from "@/components/LeadPopup";
@@ -37,6 +38,20 @@ const HomePage = () => {
     fetchData();
   }, []);
 
+  const slides = [
+    "/hero-slide-1.png",
+    "/hero-slide-2.png",
+    "/hero-slide-3.png"
+  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   const applianceServices = services.filter(s => s.category === "APPLIANCE");
   const homeServices = services.filter(s => s.category === "HOME");
 
@@ -46,39 +61,61 @@ const HomePage = () => {
       <LeadPopup />
 
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center bg-gray-950 overflow-hidden">
-        <div className="absolute inset-0 opacity-40">
-           <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-900/80 to-transparent z-10" />
-           <div className="w-full h-full bg-[url('/hero-bg.jpg')] bg-cover bg-center" />
+      <section className="relative min-h-[95vh] flex bg-gray-950 overflow-hidden">
+        {/* Slider Background */}
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSlide}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 0.6, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0"
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-gray-950/40 via-transparent to-gray-950/60 z-10" />
+              <div 
+                className="w-full h-full bg-cover bg-center" 
+                style={{ backgroundImage: `url('${slides[currentSlide]}')` }}
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        <div className="container mx-auto px-4 pt-48 md:pt-60 relative z-20">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-600/10 border border-blue-500/20 text-blue-400 font-bold text-xs uppercase tracking-widest mb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
-               <Star size={14} className="fill-current" />
-               <span>#1 Rated Home Service in Jaipur</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-[1.1] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-               {config?.heroText || "Reliable"} <span className="text-blue-500 italic">{config?.heroText ? "" : "Home Services"}</span> {config?.heroText ? "" : "at Your Doorstep."}
-            </h1>
-            
-            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-xl animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
-               {config?.heroSubtitle || "Expert AC repair, RO maintenance, and professional house cleaning across Jaipur. Book in 60 seconds."}
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-               <button className="w-full sm:w-auto px-10 py-5 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 transform hover:-translate-y-1">
-                  Book a Service
+        <div className="container mx-auto px-4 relative z-20 h-full min-h-[95vh]">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="absolute bottom-24 left-4 md:left-8 flex flex-col sm:flex-row items-center sm:items-center space-y-4 sm:space-y-0 sm:space-x-6"
+            >
+               <button 
+                  onClick={() => (window as any).showLeadPopup?.()}
+                  className="px-10 py-5 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-700 transition-all shadow-2xl shadow-blue-500/40 transform hover:-translate-y-2 active:scale-95 border-2 border-white/10 backdrop-blur-sm"
+               >
+                  Book a Service Now
                </button>
-               <a href={`tel:${config?.phone || "+919876543210"}`} className="flex items-center space-x-3 text-white font-bold text-lg hover:text-blue-400 transition-colors group">
-                  <span className="p-3 rounded-full border border-blue-500/30 group-hover:bg-blue-500/10 transition-all">
-                     <LucideIcons.Phone size={24} />
+               
+               <a href={`tel:${config?.phone || "+919876543210"}`} className="flex items-center space-x-3 text-white font-bold text-lg hover:text-blue-400 transition-all group backdrop-blur-md bg-white/10 px-6 py-4 rounded-full border border-white/20 hover:bg-white/20">
+                  <span className="p-2.5 rounded-full bg-blue-500 text-white shadow-lg shadow-blue-500/30">
+                     <LucideIcons.Phone size={20} />
                   </span>
                   <span>Contact Now</span>
                </a>
+            </motion.div>
+
+            {/* Slide Indicators */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentSlide === i ? "bg-blue-600 w-8" : "bg-white/30"
+                  }`}
+                />
+              ))}
             </div>
-          </div>
         </div>
       </section>
 
