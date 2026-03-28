@@ -76,16 +76,14 @@ const LoginFormContent = ({ title, subtitle, redirectTo, requiredRole }: LoginFo
 
         toast.success("Identity Verified. Redirecting...");
         
-        // Role-based automatic redirection if no callbackUrl
-        let finalRedirect = redirectTo;
-        if (!callbackUrl) {
-          if (userRole === "ADMIN" || userRole === "MANAGER") finalRedirect = "/super-admin";
-          else if (userRole === "EDITOR") finalRedirect = "/editor";
-          else if (userRole === "USER") finalRedirect = "/dashboard";
-        }
-
-        // Use window.location.href for a full page reload to ensure middleware catches the new session cookie immediately
-        window.location.href = callbackUrl || finalRedirect;
+        // Final redirection based on intended purpose
+        setTimeout(() => {
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
+          } else {
+            window.location.href = redirectTo;
+          }
+        }, 300);
       }
     } catch (error) {
       toast.error("Critical identity sync error. Try again.");
