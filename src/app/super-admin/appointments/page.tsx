@@ -16,9 +16,10 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 export default function AppointmentsDashboard() {
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -118,8 +119,8 @@ export default function AppointmentsDashboard() {
                <div className="relative z-10 space-y-6">
                   <div className="p-3 bg-white/20 rounded-2xl w-fit"><Wrench size={24}/></div>
                   <div>
-                     <div className="text-5xl font-black italic tracking-tighter">14</div>
-                     <div className="text-[10px] font-black uppercase tracking-[0.3em] mt-1 opacity-80">Technicians Online</div>
+                      <div className="text-5xl font-black italic tracking-tighter">14</div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.3em] mt-1 opacity-80">Technicians Online</div>
                   </div>
                   <div className="pt-6 border-t border-white/20">
                      <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 leading-relaxed">Fleet currently operating at 82% efficiency in Jaipur core sectors.</p>
@@ -143,28 +144,30 @@ export default function AppointmentsDashboard() {
 
 function AppointmentCard({ apt }: any) {
   return (
-    <div className="group bg-white/5 border border-white/5 rounded-3xl p-8 hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden">
-       <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-             <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center font-extrabold text-white text-xl border border-white/5">{apt.customer[0]}</div>
-             <div>
-                <div className="text-lg font-black text-white tracking-tight">{apt.customer}</div>
-                <div className="flex items-center space-x-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
-                   <span className="text-blue-500">{apt.service}</span>
-                   <span>•</span>
-                   <span>{apt.location}</span>
+    <Link href={`/super-admin/appointments/${apt.leadId}`} className="block">
+       <div className="group bg-white/5 border border-white/5 rounded-3xl p-8 hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden">
+          <div className="flex items-center justify-between">
+             <div className="flex items-center space-x-6">
+                <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center font-extrabold text-white text-xl border border-white/5">{apt.customer[0]}</div>
+                <div>
+                   <div className="text-lg font-black text-white tracking-tight">{apt.customer}</div>
+                   <div className="flex items-center space-x-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
+                      <span className="text-blue-400">{apt.service}</span>
+                      <span>•</span>
+                      <span>{apt.location}</span>
+                   </div>
                 </div>
              </div>
-          </div>
-          <div className="text-right">
-             <div className="text-xs font-black text-white flex items-center justify-end space-x-2 mb-1">
-                <Clock size={14} className="text-blue-500" />
-                <span>{apt.time}</span>
+             <div className="text-right">
+                <div className="text-xs font-black text-white flex items-center justify-end space-x-2 mb-1">
+                   <Clock size={14} className="text-blue-500" />
+                   <span>{apt.time}</span>
+                </div>
+                <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black tracking-widest uppercase text-gray-400 border border-white/10">Tech: {apt.tech}</span>
              </div>
-             <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black tracking-widest uppercase text-gray-400 border border-white/10">{apt.status}</span>
           </div>
        </div>
-    </div>
+    </Link>
   );
 }
 

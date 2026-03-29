@@ -2,9 +2,12 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 const LeadSchema = new Schema(
   {
+    requestId: { type: String, unique: true },
     name: { type: String, required: true },
     phone: { type: String, required: true },
     email: { type: String },
+    serviceType: { type: String },
+    category: { type: String },
     service: { type: String, required: true },
     servicePlan: { type: String },
     price: { type: String },
@@ -20,6 +23,7 @@ const LeadSchema = new Schema(
       default: "UNASSIGNED",
     },
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
+    assignedTechnician: { type: Schema.Types.ObjectId, ref: "Technician" },
   },
   { timestamps: true }
 );

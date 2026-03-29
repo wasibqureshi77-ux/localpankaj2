@@ -8,11 +8,14 @@ const LeadPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submittedRequestId, setSubmittedRequestId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
-    service: "AC REPAIR",
+    serviceType: "",
+    category: "",
+    service: "",
     servicePlan: "",
     price: "",
     state: "Rajasthan",
@@ -22,6 +25,59 @@ const LeadPopup = () => {
     bookingTime: "",
     address: "",
   });
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      bookingDate: new Date().toISOString().split('T')[0]
+    }));
+  }, []);
+
+  const [categories, setCategories] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [fetchingServices, setFetchingServices] = useState(false);
+
+  // Fetch all categories (Services) on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get("/api/services");
+        setCategories(res.data);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch sub-services (Products) when category changes
+  useEffect(() => {
+    const fetchSubServices = async () => {
+      if (!formData.category) {
+        setServices([]);
+        return;
+      }
+      
+      const selectedCategory = categories.find(c => c.name === formData.category);
+      if (!selectedCategory) return;
+
+      setFetchingServices(true);
+      try {
+        const res = await axios.get(`/api/products?serviceId=${selectedCategory._id}`);
+        setServices(res.data);
+      } catch (err) {
+        console.error("Failed to fetch sub-services", err);
+      } finally {
+        setFetchingServices(false);
+      }
+    };
+    fetchSubServices();
+  }, [formData.category, categories]);
+
+  const serviceTypes = [
+    { label: "Home Repair", value: "HOME" },
+    { label: "Appliances Repair", value: "APPLIANCE" }
+  ];
 
   useEffect(() => {
     // Expose trigger globally
@@ -49,11 +105,12 @@ const LeadPopup = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post("/api/leads", formData);
+      const res = await axios.post("/api/leads", formData);
+      setSubmittedRequestId(res.data.requestId);
       setIsSubmitted(true);
       setTimeout(() => {
         handleClose();
-      }, 3000);
+      }, 5000); // 5 seconds to let them see the ID
     } catch (error) {
        console.error("Lead submission failed", error);
     } finally {
@@ -99,16 +156,6 @@ const LeadPopup = () => {
                            />
                         </div>
                         <div className="space-y-1">
-                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Email</label>
-                           <input
-                              type="email"
-                              className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              placeholder="Email"
-                              value={(formData as any).email}
-                              onChange={(e) => setFormData({...formData, email: e.target.value} as any)}
-                           />
-                        </div>
-                        <div className="space-y-1">
                            <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Mobile Number</label>
                            <input
                               type="tel"
@@ -119,44 +166,69 @@ const LeadPopup = () => {
                               onChange={(e) => setFormData({...formData, phone: e.target.value})}
                            />
                         </div>
+                        <div className="space-y-1">
+                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Email</label>
+                           <input
+                              type="email"
+                              className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
+                              placeholder="Email"
+                              value={formData.email}
+                              onChange={(e) => setFormData({...formData, email: e.target.value})}
+                           />
+                        </div>
                      </div>
 
                      {/* Row 2: Service Details */}
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Select Service</label>
+                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Select Service Type</label>
                            <select
+                              required
                               className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              value={formData.service}
-                              onChange={(e) => setFormData({...formData, service: e.target.value})}
-                           >
-                              <option value="AC REPAIR">Select</option>
-                              <option value="AC REPAIR">AC Repair</option>
-                              <option value="RO REPAIR">RO Repair</option>
-                              <option value="ESTIMATION">Estimation</option>
-                           </select>
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Service Plan</label>
-                           <select
-                              className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              value={(formData as any).servicePlan}
-                              onChange={(e) => setFormData({...formData, servicePlan: e.target.value} as any)}
+                              value={formData.serviceType}
+                              onChange={(e) => setFormData({...formData, serviceType: e.target.value, category: "", service: ""})}
                            >
                               <option value="">Select</option>
-                              <option value="Standard">Standard</option>
-                              <option value="Premium">Premium</option>
+                              {serviceTypes.map(type => (
+                                <option key={type.value} value={type.value}>{type.label}</option>
+                              ))}
                            </select>
                         </div>
                         <div className="space-y-1">
-                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Price</label>
-                           <input
-                              type="text"
-                              className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              placeholder="Price"
-                              value={(formData as any).price}
-                              onChange={(e) => setFormData({...formData, price: e.target.value} as any)}
-                           />
+                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Category</label>
+                           <select
+                              required
+                              disabled={!formData.serviceType}
+                              className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition disabled:opacity-50"
+                              value={formData.category}
+                              onChange={(e) => setFormData({...formData, category: e.target.value, service: ""})}
+                           >
+                              <option value="">Select</option>
+                              {categories
+                                .filter(c => c.category === formData.serviceType)
+                                .map(cat => (
+                                  <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                ))
+                              }
+                           </select>
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Service</label>
+                           <select
+                              required
+                              disabled={!formData.category || fetchingServices}
+                              className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition disabled:opacity-50"
+                              value={formData.service}
+                              onChange={(e) => {
+                                const svc = services.find(s => s.name === e.target.value);
+                                setFormData({...formData, service: e.target.value, price: svc?.price?.toString() || ""});
+                              }}
+                           >
+                              <option value="">{fetchingServices ? "Loading..." : "Select"}</option>
+                              {services.map(svc => (
+                                <option key={svc._id} value={svc.name}>{svc.name}</option>
+                              ))}
+                           </select>
                         </div>
                      </div>
 
@@ -166,8 +238,8 @@ const LeadPopup = () => {
                            <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Select State</label>
                            <select
                               className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              value={(formData as any).state}
-                              onChange={(e) => setFormData({...formData, state: e.target.value} as any)}
+                              value={formData.state}
+                              onChange={(e) => setFormData({...formData, state: e.target.value})}
                            >
                               <option value="">Select</option>
                               <option value="Rajasthan">Rajasthan</option>
@@ -177,8 +249,8 @@ const LeadPopup = () => {
                            <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">City</label>
                            <select
                               className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              value={(formData as any).city}
-                              onChange={(e) => setFormData({...formData, city: e.target.value} as any)}
+                              value={formData.city}
+                              onChange={(e) => setFormData({...formData, city: e.target.value})}
                            >
                               <option value="">Select</option>
                               <option value="Jaipur">Jaipur</option>
@@ -191,8 +263,8 @@ const LeadPopup = () => {
                               required
                               className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
                               placeholder="Pincode"
-                              value={(formData as any).pincode}
-                              onChange={(e) => setFormData({...formData, pincode: e.target.value} as any)}
+                              value={formData.pincode}
+                              onChange={(e) => setFormData({...formData, pincode: e.target.value})}
                            />
                         </div>
                      </div>
@@ -204,20 +276,29 @@ const LeadPopup = () => {
                            <input
                               type="date"
                               required
+                              min={new Date().toISOString().split('T')[0]}
                               className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              value={(formData as any).bookingDate}
-                              onChange={(e) => setFormData({...formData, bookingDate: e.target.value} as any)}
+                              value={formData.bookingDate}
+                              onChange={(e) => setFormData({...formData, bookingDate: e.target.value})}
                            />
                         </div>
                         <div className="space-y-1">
                            <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Booking Time</label>
-                           <input
-                              type="text"
+                           <select
+                              required
                               className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
-                              placeholder="e.g. 8:00 AM To 10:00 AM"
-                              value={(formData as any).bookingTime}
-                              onChange={(e) => setFormData({...formData, bookingTime: e.target.value} as any)}
-                           />
+                              value={formData.bookingTime}
+                              onChange={(e) => setFormData({...formData, bookingTime: e.target.value})}
+                           >
+                              <option value="">Select Time Slot</option>
+                              <option value="8:00 AM To 10:00 AM">8:00 AM To 10:00 AM</option>
+                              <option value="10:00 AM To 12:00 PM">10:00 AM To 12:00 PM</option>
+                              <option value="12:00 PM To 2:00 PM">12:00 PM To 2:00 PM</option>
+                              <option value="2:00 PM To 4:00 PM">2:00 PM To 4:00 PM</option>
+                              <option value="4:00 PM To 6:00 PM">4:00 PM To 6:00 PM</option>
+                              <option value="6:00 PM To 8:00 PM">6:00 PM To 8:00 PM</option>
+                              <option value="8:00 PM To 10:00 PM">8:00 PM To 10:00 PM</option>
+                           </select>
                         </div>
                      </div>
 
@@ -229,8 +310,8 @@ const LeadPopup = () => {
                            required
                            className="w-full px-3 py-2 rounded bg-white text-gray-800 text-sm focus:ring-1 focus:ring-blue-400 outline-none transition"
                            placeholder="Address"
-                           value={(formData as any).address}
-                           onChange={(e) => setFormData({...formData, address: e.target.value} as any)}
+                           value={formData.address}
+                           onChange={(e) => setFormData({...formData, address: e.target.value})}
                         />
                      </div>
 
@@ -251,12 +332,13 @@ const LeadPopup = () => {
                      <CheckCircle2 size={40} className="text-green-600" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Request Received!</h3>
+                  <p className="text-gray-600 mb-1">Your Tracking ID: <span className="font-bold text-blue-600 px-2 py-1 bg-blue-50 rounded border border-blue-100">{submittedRequestId}</span></p>
                   <p className="text-gray-600 mb-4">Our team will call you within <span className="font-bold text-blue-600">5 minutes</span>.</p>
                   <div className="h-1 bg-gray-100 rounded-full w-48 mx-auto mt-6">
                      <motion.div
                        initial={{ width: 0 }}
                        animate={{ width: "100%" }}
-                       transition={{ duration: 3 }}
+                       transition={{ duration: 5 }}
                        className="h-full bg-green-500 rounded-full"
                      />
                   </div>

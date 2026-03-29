@@ -25,6 +25,11 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
     await connectDB();
+    
+    // Generate unique Request ID
+    const randomId = Math.random().toString(36).substring(2, 7).toUpperCase();
+    data.requestId = `LP-${randomId}`;
+
     const lead = await Lead.create(data);
 
     // Trigger Lead Alerts
@@ -36,10 +41,10 @@ export async function POST(req: Request) {
       if (data.email) {
         await sendEmail({
           to: data.email,
-          subject: "Service Request Received - Local Pankaj ✅",
+          subject: `Service Request Received [${data.requestId}] - Local Pankaj ✅`,
           html: bookingTemplate({
-            service: data.service,
-            date: "Reviewing Schedule",
+            service: `${data.service} (Req ID: ${data.requestId})`,
+            date: data.bookingDate || "Reviewing Schedule",
             location: data.address || "Jaipur"
           })
         });
@@ -48,15 +53,17 @@ export async function POST(req: Request) {
       // To Admin
       await sendEmail({
         to: process.env.ADMIN_EMAIL || "admin@localpankaj.com",
-        subject: "New Lead Generated! 📞",
+        subject: `New Lead Generated - ${data.requestId} 📞`,
         html: adminTemplate({
           message: `New service lead captured: <strong>${data.service}</strong>`,
           details: `
+            Request ID: <strong style="color: #2563eb;">${data.requestId}</strong><br>
             Name: <strong>${data.name}</strong><br>
             Email: <strong>${data.email || "N/A"}</strong><br>
             Phone: <strong>${data.phone}</strong><br>
-            Service Plan: <strong>${data.servicePlan || "N/A"}</strong><br>
-            Price: <strong>${data.price || "N/A"}</strong><br>
+            Service Type: <strong>${data.serviceType || "N/A"}</strong><br>
+            Category: <strong>${data.category || "N/A"}</strong><br>
+            Service: <strong>${data.service}</strong><br>
             Location: <strong>${data.city}, ${data.state} (${data.pincode})</strong><br>
             Booking Date: <strong>${data.bookingDate}</strong><br>
             Booking Time: <strong>${data.bookingTime}</strong><br>

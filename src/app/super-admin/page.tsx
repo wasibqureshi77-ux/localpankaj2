@@ -42,29 +42,13 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20 animate-in fade-in duration-1000">
-         <div>
-            <div className="flex items-center space-x-3 text-blue-500 font-black text-[10px] uppercase tracking-[0.5em] mb-4">
-               <Zap size={14} className="fill-current" />
-               <span>Real-time Operation Status</span>
-            </div>
-            <h1 className="text-6xl font-black text-white tracking-tighter leading-tight italic">
-               System <span className="text-blue-600">Analytics.</span>
-            </h1>
-         </div>
-         <div className="flex items-center space-x-6">
-            <div className="p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl">
-               <div className="text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Revenue Status</div>
-               <div className="text-2xl font-black text-green-500 flex items-center space-x-2 tabular-nums">
-                  <span>₹ 1,45,200</span>
-                  <ArrowUpRight size={18} />
-               </div>
-            </div>
-            <button className="px-10 py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-3xl font-black text-xs uppercase tracking-[0.3em] transition shadow-2xl shadow-blue-600/30 transform hover:-translate-y-1 active:scale-95">
-               Export Global Report
-            </button>
-         </div>
+    <div className="max-w-7xl mx-auto space-y-12 animate-in slide-in-from-bottom-10 duration-1000">
+      <div className="pt-0">
+         <h1 className="text-3xl font-black text-blue-600 uppercase tracking-[0.4em]">Dashboard</h1>
+      </div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in duration-1000">
+         <div />
+         <div className="flex items-center space-x-6" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-20">

@@ -77,10 +77,21 @@ export default function AdminLayout({
            <AdminSidebarLink href="/super-admin" icon={<BarChart3 size={20}/>} label="Executive Analytics" active={pathname === "/super-admin"} />
            <AdminSidebarLink href="/super-admin/leads" icon={<PhoneIncoming size={20}/>} label="Leads Pipeline" active={pathname === "/super-admin/leads"} />
            <AdminSidebarLink href="/super-admin/appointments" icon={<CalendarCheck size={20}/>} label="Operations" active={pathname === "/super-admin/appointments"} />
+           <AdminSidebarLink href="/super-admin/technicians" icon={<UserCog size={20}/>} label="Manage Technician" active={pathname === "/super-admin/technicians"} />
            <AdminSidebarLink href="/super-admin/website-users" icon={<Users size={20}/>} label="Website Users" active={pathname === "/super-admin/website-users"} />
            <AdminSidebarLink href="/super-admin/management-users" icon={<UserCog size={20}/>} label="Management Users" active={pathname === "/super-admin/management-users"} />
            <AdminSidebarLink href="/super-admin/services" icon={<Settings2 size={20}/>} label="Services Catalog" active={pathname === "/super-admin/services"} />
            <AdminSidebarLink href="/super-admin/products" icon={<Package size={20}/>} label="Product Inventory" active={pathname === "/super-admin/products"} />
+           
+           <button 
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full flex items-center space-x-5 px-6 py-5 rounded-3xl transition-all duration-500 relative overflow-hidden group text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20"
+           >
+              <div className="text-red-500 group-hover:scale-110 transition-all duration-300">
+                 <LogOut size={20}/>
+              </div>
+              <span className="text-[10px] tracking-[0.2em] font-black uppercase">Terminate Session</span>
+           </button>
         </nav>
 
         <div className="p-8 border-t border-white/5 mt-auto">
@@ -90,46 +101,7 @@ export default function AdminLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto flex flex-col relative bg-[radial-gradient(circle_at_50%_0%,_#1e1b4b_0%,_#030712_100%)]">
-          {/* Top Navbar */}
-          <header className="sticky top-0 z-30 bg-gray-950/20 backdrop-blur-3xl border-b border-white/5 px-12 py-6 flex items-center justify-between">
-             <div className="relative max-w-sm w-full group hidden md:block">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" size={18} />
-                <input 
-                   type="text" 
-                   placeholder="SEARCH ACROSS LEAD PIPELINE..." 
-                   className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-[10px] font-bold tracking-widest outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all uppercase"
-                />
-             </div>
-             
-             <div className="flex items-center space-x-8">
-                <div className="hidden xl:flex items-center space-x-8">
-                   <div className="text-right">
-                      <div className="text-[10px] font-extrabold text-blue-500 mb-1">SYSTEM TIME</div>
-                      <div className="text-sm font-black tabular-nums tracking-tighter shadow-sm bg-white/5 inline-block px-2 text-white italic">12:45:00 PM <span className="text-[10px] text-gray-500 font-bold ml-1 uppercase">IST</span></div>
-                   </div>
-                   <div className="w-[1px] h-8 bg-white/10" />
-                </div>
-
-                <div className="flex items-center space-x-6">
-                   <div className="flex items-center space-x-4 bg-white/5 p-2 pr-6 rounded-2xl border border-white/10 group hover:border-blue-500/30 transition-all">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-lg group-hover:scale-110 transition-transform">{getInitials()}</div>
-                      <div className="hidden sm:block">
-                         <div className="text-[10px] font-black tracking-tight text-white mb-0.5 uppercase italic">{session?.user?.name || "Admin"}</div>
-                         <div className="text-[7px] font-bold text-blue-500 uppercase tracking-widest">{session?.user?.role || "ROOT"}</div>
-                      </div>
-                   </div>
-
-                   <button 
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 active:scale-90 flex items-center space-x-2 group"
-                      title="Terminate Session"
-                   >
-                      <LogOut size={20} />
-                      <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Logout</span>
-                   </button>
-                </div>
-             </div>
-          </header>
+          {/* Page Content */}
 
           {/* Page Content */}
           <div className="p-12 lg:p-16 flex-1 relative animate-in fade-in zoom-in-95 duration-700">

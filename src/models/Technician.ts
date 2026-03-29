@@ -4,10 +4,15 @@ const TechnicianSchema = new Schema(
   {
     name: { type: String, required: true },
     phone: { type: String, required: true },
-    serviceType: { type: String, required: true },
-    availability: { type: Boolean, default: true },
+    email: { type: String },
+    specialties: [{ type: String }], // e.g., ["Electrician", "AC Expert"]
+    status: { type: String, enum: ["ACTIVE", "BUSY", "OFFLINE"], default: "ACTIVE" },
   },
   { timestamps: true }
 );
 
-export const Technician = models.Technician || model("Technician", TechnicianSchema);
+if (mongoose.models.Technician) {
+  delete mongoose.models.Technician;
+}
+
+export const Technician = mongoose.model("Technician", TechnicianSchema);

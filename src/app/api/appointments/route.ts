@@ -5,16 +5,20 @@ import { Appointment } from "@/models/Appointment";
 export async function GET() {
   try {
     await connectDB();
-    // In a real app we'd populate, but for simplicity I'll return mock if empty or transform
-    const appointments = await Appointment.find({}).sort({ date: 1 });
+    const appointments = await Appointment.find({})
+      .populate("leadId")
+      .populate("technicianId")
+      .sort({ createdAt: -1 });
     
-    // Transform to my UI friendly format if needed
     const formatted = appointments.map((a: any) => ({
-      ...a._doc,
-      customer: a.customer || "System User", // Fallback for simple display
-      service: a.service || "Maintenace Service",
-      location: a.location || "Jaipur Central",
-      time: a.time || new Date(a.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      _id: a._id,
+      leadId: a.leadId?._id || a.leadId,
+      customer: a.leadId?.name || "System User",
+      service: a.leadId?.service || "Maintenance Service",
+      location: `${a.leadId?.city || "Jaipur"}, ${a.leadId?.pincode || ""}`,
+      time: a.leadId?.bookingTime || new Date(a.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: a.status || "PENDING",
+      tech: a.technicianId?.name || "Unassigned"
     }));
 
     return NextResponse.json(formatted);
