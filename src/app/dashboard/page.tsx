@@ -66,11 +66,10 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20 animate-in fade-in duration-1000 delay-300">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20 animate-in fade-in duration-1000 delay-300">
          <StatsCard icon={<Package className="text-blue-600"/>} label="Total Assets" value={data.stats.total.toString().padStart(2, '0')} color="bg-blue-50" />
          <StatsCard icon={<Clock className="text-amber-600"/>} label="Live Units" value={(data.stats.unassigned + data.stats.converted).toString().padStart(2, '0')} color="bg-amber-50" />
          <StatsCard icon={<CheckCircle2 className="text-emerald-600"/>} label="Fulfilled" value={data.stats.completed.toString().padStart(2, '0')} color="bg-emerald-50" />
-         <StatsCard icon={<TrendingUp className="text-indigo-600"/>} label="Next Due" value={activeLeads[0]?.bookingDate || "None"} color="bg-indigo-50" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

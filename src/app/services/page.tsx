@@ -47,43 +47,70 @@ function ServicesContent() {
         <div className="py-20 text-center text-gray-400 font-black uppercase tracking-[0.5em] text-xs">Accessing Catalog...</div>
       ) : (
         <>
-          {categoryFilter && (
-            <div className="mb-12 flex items-center space-x-4">
-               <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-6 py-2 rounded-full border border-blue-100">
-                  Filtering by: {categoryFilter === 'APPLIANCE' ? 'Appliance Repair' : 'Home Repair'}
-               </div>
-               <Link href="/services" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors">Clear Filter [x]</Link>
-            </div>
-          )}
+          {/* Category Filter Tabs */}
+          <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 mb-16 px-4">
+             <Link 
+                href="/services" 
+                className={`px-6 sm:px-10 py-3 sm:py-4 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${
+                   !categoryFilter 
+                   ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20" 
+                   : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                }`}
+             >
+                All Services
+             </Link>
+             <Link 
+                href="/services?category=APPLIANCE" 
+                className={`px-6 sm:px-10 py-3 sm:py-4 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${
+                   categoryFilter === 'APPLIANCE' 
+                   ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20" 
+                   : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                }`}
+             >
+                Appliance Repair
+             </Link>
+             <Link 
+                href="/services?category=HOME" 
+                className={`px-6 sm:px-10 py-3 sm:py-4 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${
+                   categoryFilter === 'HOME' 
+                   ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20" 
+                   : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                }`}
+             >
+                Home Repair
+             </Link>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-12">
             {filteredServices.map((service, idx) => (
               <Link 
                 key={service._id} 
                 href={`/services/${service.slug}`}
-                className="group relative bg-white p-12 rounded-[3.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-10"
+                className="group relative bg-white p-4 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-10"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
-                <div className="w-24 h-24 bg-blue-50 rounded-[2rem] flex items-center justify-center text-blue-600 mb-8 overflow-hidden relative shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-all duration-700">
-                  <div className="text-4xl">
+                <div className="w-12 h-12 sm:w-24 sm:h-24 bg-blue-50 rounded-[1rem] sm:rounded-[2rem] flex items-center justify-center text-blue-600 mb-4 sm:mb-8 overflow-hidden relative shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-all duration-700">
+                  <div className="text-xl sm:text-4xl">
                     <DynamicIcon name={service.iconName} />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{service.category || "Service Unit"}</div>
-                  <h3 className="text-3xl font-black text-gray-950 uppercase italic tracking-tighter leading-none">{service.name}</h3>
-                  <p className="text-gray-500 text-sm font-medium line-clamp-3 leading-relaxed">
-                    Professional {service.name.toLowerCase()} solutions for Jaipur's residential and commercial sectors. Same-day dispatch available.
+                <div className="space-y-1 sm:space-y-4">
+                  <div className="text-[7px] sm:text-[10px] font-black text-blue-500 uppercase tracking-widest">{service.category || "Service Unit"}</div>
+                  <h3 className="text-[15px] sm:text-3xl font-black text-gray-950 uppercase italic tracking-tighter leading-tight line-clamp-1 sm:line-clamp-none break-all sm:break-normal">
+                    {service.name}
+                  </h3>
+                  <p className="text-gray-500 text-[9px] sm:text-sm font-medium line-clamp-2 sm:line-clamp-3 leading-relaxed">
+                    Professional {service.name.toLowerCase()} solutions.
                   </p>
                 </div>
                 
-                <div className="mt-10 flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:space-x-4 transition-all duration-300">
-                    <span>Configure Booking</span>
-                    <ChevronRight size={14} />
+                <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+                  <div className="flex items-center space-x-2 text-[8px] sm:text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:space-x-4 transition-all duration-300">
+                    <span>Configure</span>
+                    <ChevronRight size={12} className="sm:size-14" />
                   </div>
-                  <div className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center text-gray-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all duration-700">
+                  <div className="hidden sm:flex w-12 h-12 rounded-full border border-gray-100 items-center justify-center text-gray-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all duration-700">
                     <ArrowRight size={20} />
                   </div>
                 </div>

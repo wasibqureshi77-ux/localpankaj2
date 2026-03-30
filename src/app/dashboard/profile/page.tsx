@@ -5,39 +5,50 @@ import {
   Mail, 
   Phone, 
   MapPin, 
-  ShieldCheck, 
+  Lock, 
   Edit2, 
-  Save, 
   Camera,
   Loader2
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function ProfilePage() {
   const { data: session }: any = useSession();
-  const [stats, setStats] = useState({ total: 0 });
+  const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [passwords, setPasswords] = useState({
+    old: "",
+    new: "",
+    confirm: ""
+  });
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  const fetchProfileStats = async () => {
+  const fetchProfileData = async () => {
     if (!session?.user?.email && !session?.user?.phone) return;
     try {
       const { data } = await axios.get(`/api/leads?email=${session.user.email || ""}&phone=${session.user.phone || ""}`);
-      setStats(data.stats || { total: 0 });
+      setLeads(data.leads || []);
     } catch (err) {
-      console.error("Profile telemetry sync failed");
+      console.error("Profile sync failure");
     } finally {
       setLoading(false);
     }
   };
 
+
+
   useEffect(() => {
-    if (session) fetchProfileStats();
+    if (session) fetchProfileData();
   }, [session]);
 
   const initials = session?.user?.name
     ? session.user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase()
     : "JD";
+
+  const firstLeadAddress = leads.length > 0 ? leads[0].address : "N/A";
 
   if (loading && !session) {
     return (
@@ -73,23 +84,58 @@ export default function ProfilePage() {
                  <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.3em] mb-10 bg-blue-50 inline-block px-3 py-1 rounded-full border border-blue-100 italic">VERIFIED MEMBER ALPHA-1</p>
               </div>
               
-              <div className="pt-10 border-t border-gray-50 grid grid-cols-2 gap-8 text-center bg-gray-50/50 -mx-12 -mb-12 p-12">
-                 <div className="group/stat">
-                    <div className="text-3xl font-black text-gray-900 tracking-tighter group-hover:text-blue-600 transition-colors">{stats.total.toString().padStart(2, '0')}</div>
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-2 italic">Total Assets</div>
-                 </div>
-                 <div className="group/stat">
-                    <div className="text-3xl font-black text-blue-600 tracking-tighter group-hover:scale-110 transition-transform">4.9</div>
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-2 italic">Loyalty Rank</div>
-                 </div>
-              </div>
+
            </div>
 
-           <div className="bg-emerald-50/50 p-10 rounded-[3rem] border border-emerald-100/50 flex items-center space-x-6 group cursor-help shadow-sm">
-              <div className="p-4 bg-white text-emerald-500 rounded-2xl shadow-sm transform group-hover:rotate-12 transition-transform duration-500 border border-emerald-50"><ShieldCheck size={28}/></div>
-              <div>
-                 <div className="text-xs font-black text-emerald-900 uppercase italic tracking-wider">Identity Secure</div>
-                 <div className="text-[9px] font-black text-emerald-600/60 uppercase tracking-[0.2em] mt-1 italic">Multi-factor Tunnel Active</div>
+           <div className="bg-white p-12 rounded-[3.5rem] border border-gray-100 shadow-2xl shadow-blue-500/[0.03] relative group overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="flex items-center space-x-5 mb-10 border-b border-gray-50 pb-8 italic uppercase">
+                 <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-600/20"><Lock size={24}/></div>
+                 <h3 className="text-2xl font-black text-gray-900 tracking-tighter">Change Password</h3>
+              </div>
+
+              <div className="space-y-6">
+                 <PasswordField 
+                    label="Old Password" 
+                    value={passwords.old} 
+                    onChange={(e: any) => setPasswords({...passwords, old: e.target.value})} 
+                 />
+                 <PasswordField 
+                    label="New Password" 
+                    value={passwords.new} 
+                    onChange={(e: any) => setPasswords({...passwords, new: e.target.value})} 
+                 />
+                 <PasswordField 
+                    label="Confirm New Password" 
+                    value={passwords.confirm} 
+                    onChange={(e: any) => setPasswords({...passwords, confirm: e.target.value})} 
+                 />
+                 
+                 <button 
+                    disabled={isUpdatingPassword}
+                    onClick={async () => {
+                       if (passwords.new !== passwords.confirm) return toast.error("Code Mismatch Detected");
+                       if (passwords.new.length < 6) return toast.error("Code Length Insufficient");
+                       
+                       setIsUpdatingPassword(true);
+                       try {
+                          await axios.post("/api/auth/change-password", { 
+                             oldPassword: passwords.old, 
+                             newPassword: passwords.new 
+                          });
+                          toast.success("Identity Credentials Synchronized");
+                          setPasswords({ old: "", new: "", confirm: "" });
+                       } catch (err: any) {
+                          toast.error(err.response?.data?.message || "Sync Failure");
+                       } finally {
+                          setIsUpdatingPassword(false);
+                       }
+                    }}
+                    className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.4em] italic shadow-xl shadow-blue-600/20 hover:bg-black transition-all active:scale-95 disabled:opacity-50 mt-4"
+                 >
+                    {isUpdatingPassword ? "Synchronizing..." : "Update Password"}
+                 </button>
               </div>
            </div>
         </div>
@@ -103,23 +149,17 @@ export default function ProfilePage() {
               
               <h3 className="text-3xl font-black text-gray-900 mb-16 tracking-tighter border-b border-gray-50 pb-10 flex items-center space-x-5 italic uppercase">
                  <span className="p-3 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-600/20"><User size={24}/></span>
-                 <span>Global Identity</span>
+                 <span>User Profile</span>
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                 <ProfileField label="Identity Signature" value={session?.user?.name || "N/A"} icon={<User size={20}/>} />
-                 <ProfileField label="Telemetry Link (Email)" value={session?.user?.email || "N/A"} icon={<Mail size={20}/>} />
-                 <ProfileField label="Hotline Access (Phone)" value={session?.user?.phone || "N/A"} icon={<Phone size={20}/>} />
-                 <ProfileField label="Deployment Sector" value="Rajasthan, Jaipur" icon={<MapPin size={20}/>} />
-              </div>
+               <div className="space-y-6">
+                  <ProfileListItem label="Full Name" value={session?.user?.name || "N/A"} icon={<User size={20}/>} />
+                  <ProfileListItem label="Email Address" value={session?.user?.email || "N/A"} icon={<Mail size={20}/>} />
+                  <ProfileListItem label="Phone Number" value={session?.user?.phone || "N/A"} icon={<Phone size={20}/>} />
+                  <ProfileListItem label="Address & Pincode" value={firstLeadAddress} icon={<MapPin size={20}/>} />
+               </div>
 
-              <div className="mt-20 flex items-center space-x-10">
-                 <button className="px-12 py-6 bg-blue-600 text-white rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.4em] flex items-center space-x-4 shadow-[0_25px_50px_-12px_rgba(37,99,235,0.5)] hover:bg-black transition-all transform hover:-translate-y-2 group/save italic">
-                    <Save size={20} className="group-hover/save:scale-125 transition-transform" />
-                    <span>Synchronize Profile</span>
-                 </button>
-                 <button className="text-gray-400 font-black text-[10px] uppercase tracking-[0.3em] hover:text-blue-600 transition-all italic border-b-2 border-transparent hover:border-blue-600 pb-1">Reset Buffer</button>
-              </div>
+
            </div>
         </div>
       </div>
@@ -127,15 +167,34 @@ export default function ProfilePage() {
   );
 }
 
-function ProfileField({ label, value, icon }: any) {
+function ProfileListItem({ label, value, icon }: any) {
    return (
-      <div className="space-y-5 group/field">
-         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2 italic shadow-sm bg-white inline-block px-3 mb-1 border-l-4 border-blue-600">{label}</label>
-         <div className="flex items-center space-x-5 bg-gray-50/50 p-6 rounded-[2rem] border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-2xl hover:shadow-blue-900/[0.03] transition-all duration-500 cursor-text group-hover/field:translate-x-2">
-            <div className="p-3 bg-white text-gray-400 group-hover/field:text-blue-600 group-hover/field:scale-110 group-hover/field:rotate-6 transition-all duration-500 rounded-xl shadow-sm border border-gray-50">{icon}</div>
-            <span className="text-base font-black text-gray-900 flex-1 tracking-tight italic uppercase">{value}</span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-8 bg-white rounded-[2.5rem] border border-gray-100 hover:border-blue-100 hover:shadow-2xl hover:shadow-blue-900/[0.04] transition-all duration-500 group/item relative overflow-hidden">
+         <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600 opacity-0 group-hover/listitem:opacity-100 transition-opacity" />
+         <div className="flex items-center space-x-6 mb-4 md:mb-0">
+            <div className="p-4 bg-gray-50 text-gray-400 group-hover/item:text-blue-600 group-hover/item:bg-blue-50 transition-all duration-500 rounded-2xl shadow-inner flex shrink-0">
+               {icon}
+            </div>
+            <div>
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] italic mb-1">{label}</p>
+               <h4 className="text-xl font-bold text-gray-900 tracking-tight italic uppercase break-all">{value}</h4>
+            </div>
          </div>
       </div>
    );
 }
 
+function PasswordField({ label, value, onChange }: any) {
+   return (
+      <div className="space-y-4">
+         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] italic ml-4">{label}</label>
+         <input 
+            type="password" 
+            value={value}
+            onChange={onChange}
+            className="w-full bg-gray-50/50 p-6 rounded-3xl border border-gray-100 focus:border-blue-600 focus:bg-white transition-all outline-none text-sm font-bold tracking-widest"
+            placeholder="••••••••"
+         />
+      </div>
+   );
+}

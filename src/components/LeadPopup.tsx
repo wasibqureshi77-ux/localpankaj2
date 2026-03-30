@@ -12,6 +12,7 @@ const LeadPopup = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submittedRequestId, setSubmittedRequestId] = useState("");
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -113,6 +114,7 @@ const LeadPopup = () => {
   const handleClose = () => {
     setIsOpen(false);
     setIsSubmitted(false);
+    setStep(1);
     sessionStorage.setItem("hasSeenPopup", "true");
   };
 
@@ -153,196 +155,272 @@ const LeadPopup = () => {
             className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl relative overflow-hidden font-sans border border-white/20"
           >
             {!isSubmitted ? (
-               <div className="flex flex-col h-full">
-                  {/* Header */}
-                  <div className="bg-white px-10 py-8 border-b border-gray-50 flex items-center justify-between">
-                     <h3 className="text-3xl font-black text-gray-900 tracking-tighter italic uppercase">Quick <span className="text-blue-600">Booking.</span></h3>
-                     <button
-                        onClick={handleClose}
-                        className="p-3 bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-2xl transition-all"
-                     >
-                        <X size={24} />
-                     </button>
+               <div className="flex flex-col h-full overflow-y-auto max-h-[90vh]">
+                  {/* Header & Progress */}
+                  <div className="bg-white px-10 py-8 border-b border-gray-50 flex flex-col space-y-6 sticky top-0 z-20">
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                           <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-xl shadow-blue-600/20">{step}</div>
+                           <h3 className="text-2xl font-black text-gray-900 tracking-tighter italic uppercase">Step {step}: <span className="text-blue-600">{step === 1 ? "Identity" : step === 2 ? "Service" : "Deployment"}</span></h3>
+                        </div>
+                        <button
+                           onClick={handleClose}
+                           className="p-3 bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-2xl transition-all"
+                        >
+                           <X size={24} />
+                        </button>
+                     </div>
+                     
+                     {/* Progress Bar */}
+                     <div className="h-1 bg-gray-50 rounded-full w-full overflow-hidden flex space-x-1">
+                        <div className={`h-full transition-all duration-500 rounded-full ${step >= 1 ? "bg-blue-600 flex-1 shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "bg-gray-100 flex-1"}`} />
+                        <div className={`h-full transition-all duration-500 rounded-full ${step >= 2 ? "bg-blue-600 flex-1 shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "bg-gray-100 flex-1"}`} />
+                        <div className={`h-full transition-all duration-500 rounded-full ${step >= 3 ? "bg-blue-600 flex-1 shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "bg-gray-100 flex-1"}`} />
+                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="p-10 bg-white space-y-8">
-                     <div className="space-y-8">
-                        {/* Row 1: Basic Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Full Name</label>
-                              <input
-                                 type="text"
-                                 required
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 placeholder="Identity Signature"
-                                 value={formData.name}
-                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                              />
-                           </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Mobile Number</label>
-                              <input
-                                 type="tel"
-                                 required
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 placeholder="10-digit comms"
-                                 value={formData.phone}
-                                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                              />
-                           </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Email</label>
-                              <input
-                                 type="email"
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 placeholder="Secure Mail"
-                                 value={formData.email}
-                                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                              />
-                           </div>
-                        </div>
-
-                        {/* Row 2: Service Details */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Service Type</label>
-                              <select
-                                 required
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 value={formData.serviceType}
-                                 onChange={(e) => setFormData({...formData, serviceType: e.target.value, category: "", service: ""})}
-                              >
-                                 <option value="">Select Domain</option>
-                                 {serviceTypes.map(type => (
-                                    <option key={type.value} value={type.value}>{type.label}</option>
-                                 ))}
-                              </select>
-                           </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Category</label>
-                              <select
-                                 required
-                                 disabled={!formData.serviceType}
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition disabled:opacity-50"
-                                 value={formData.category}
-                                 onChange={(e) => setFormData({...formData, category: e.target.value, service: ""})}
-                              >
-                                 <option value="">Select Sector</option>
-                                 {categories
-                                    .filter(c => c.category === formData.serviceType)
-                                    .map(cat => (
-                                       <option key={cat._id} value={cat.name}>{cat.name}</option>
-                                    ))
-                                 }
-                              </select>
-                           </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Service</label>
-                              <select
-                                 required
-                                 disabled={!formData.category || fetchingServices}
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition disabled:opacity-50"
-                                 value={formData.service}
-                                 onChange={(e) => {
-                                    const svc = services.find(s => s.name === e.target.value);
-                                    setFormData({...formData, service: e.target.value, price: svc?.price?.toString() || ""});
-                                 }}
-                              >
-                                 <option value="">{fetchingServices ? "Syncing..." : "Select Task"}</option>
-                                 {services.map(svc => (
-                                    <option key={svc._id} value={svc.name}>{svc.name}</option>
-                                 ))}
-                              </select>
-                           </div>
-                        </div>
-
-                        {/* Row 3: Location */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">City</label>
-                              <select
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 value={formData.city}
-                                 onChange={(e) => setFormData({...formData, city: e.target.value})}
-                              >
-                                 <option value="Jaipur">Jaipur (Active Status)</option>
-                              </select>
-                           </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">PIN Code</label>
-                              <input
-                                 type="text"
-                                 required
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 placeholder="Postal Coordinate"
-                                 value={formData.pincode}
-                                 onChange={(e) => setFormData({...formData, pincode: e.target.value})}
-                              />
-                           </div>
-                        </div>
-
-                        {/* Row 4: Schedule */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Booking Date</label>
-                              <input
-                                 type="date"
-                                 required
-                                 min={new Date().toISOString().split('T')[0]}
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 value={formData.bookingDate}
-                                 onChange={(e) => setFormData({...formData, bookingDate: e.target.value})}
-                              />
-                           </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Time Slot</label>
-                              <select
-                                 required
-                                 className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                                 value={formData.bookingTime}
-                                 onChange={(e) => setFormData({...formData, bookingTime: e.target.value})}
-                              >
-                                 <option value="">Select Window</option>
-                                 <option value="8:00 AM To 10:00 AM">08:00 - 10:00</option>
-                                 <option value="10:00 AM To 12:00 PM">10:00 - 12:00</option>
-                                 <option value="12:00 PM To 2:00 PM">12:00 - 14:00</option>
-                                 <option value="2:00 PM To 4:00 PM">14:00 - 16:00</option>
-                                 <option value="4:00 PM To 6:00 PM">16:00 - 18:00</option>
-                                 <option value="6:00 PM To 8:00 PM">18:00 - 20:00</option>
-                                 <option value="8:00 PM To 10:00 PM">20:00 - 22:00</option>
-                              </select>
-                           </div>
-                        </div>
-
-                        {/* Row 5: Address */}
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Complete Address</label>
-                           <input
-                              type="text"
-                              required
-                              className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
-                              placeholder="Physical Node Location"
-                              value={formData.address}
-                              onChange={(e) => setFormData({...formData, address: e.target.value})}
-                           />
-                        </div>
-
-                        <div className="flex justify-center pt-6">
-                           <button
-                              type="submit"
-                              disabled={loading}
-                              className="bg-blue-600 text-white font-black px-16 py-5 rounded-[2rem] shadow-2xl shadow-blue-600/30 transition-all hover:bg-black disabled:opacity-50 flex items-center space-x-3 uppercase tracking-widest text-xs"
+                  <form onSubmit={handleSubmit} className="p-10 bg-white">
+                     <AnimatePresence mode="wait">
+                        {step === 1 && (
+                           <motion.div
+                              key="step1"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="space-y-8"
                            >
-                              {loading ? <Loader2 className="animate-spin" size={20} /> : (
-                                 <>
-                                    <span>Initialize Booking</span>
-                                    <ArrowRight size={18} />
-                                 </>
-                              )}
-                           </button>
-                        </div>
-                     </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Full Name</label>
+                                    <input
+                                       type="text"
+                                       required
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       placeholder="Identity Signature"
+                                       value={formData.name}
+                                       onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    />
+                                    {/* Mobile helper */}
+                                    <p className="text-[9px] font-bold text-gray-400 italic ml-4 md:hidden">Please enter your legal name as per ID.</p>
+                                 </div>
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Mobile Number</label>
+                                    <input
+                                       type="tel"
+                                       required
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       placeholder="10-digit comms"
+                                       value={formData.phone}
+                                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                    />
+                                 </div>
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Email Address</label>
+                                 <input
+                                    type="email"
+                                    required
+                                    className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                    placeholder="Secure Mail Node"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                 />
+                              </div>
+                              <button
+                                 type="button"
+                                 onClick={() => {
+                                    if (!formData.name || !formData.phone || !formData.email) return toast.error("Complete Identity Protocol");
+                                    setStep(2);
+                                 }}
+                                 className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] italic shadow-xl shadow-blue-600/20 hover:bg-black transition-all active:scale-95 flex items-center justify-center space-x-2"
+                              >
+                                 <span>Next step</span>
+                                 <ArrowRight size={16} />
+                              </button>
+                           </motion.div>
+                        )}
+
+                        {step === 2 && (
+                           <motion.div
+                              key="step2"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="space-y-8"
+                           >
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Service Type</label>
+                                    <select
+                                       required
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       value={formData.serviceType}
+                                       onChange={(e) => setFormData({...formData, serviceType: e.target.value, category: "", service: ""})}
+                                    >
+                                       <option value="">Select Type</option>
+                                       {serviceTypes.map(type => (
+                                          <option key={type.value} value={type.value}>{type.label}</option>
+                                       ))}
+                                    </select>
+                                 </div>
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Category</label>
+                                    <select
+                                       required
+                                       disabled={!formData.serviceType}
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition disabled:opacity-50"
+                                       value={formData.category}
+                                       onChange={(e) => setFormData({...formData, category: e.target.value, service: ""})}
+                                    >
+                                       <option value="">Select Category</option>
+                                       {categories
+                                          .filter(c => c.category === formData.serviceType)
+                                          .map(cat => (
+                                             <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                          ))
+                                       }
+                                    </select>
+                                 </div>
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Select Service</label>
+                                 <select
+                                    required
+                                    disabled={!formData.category || fetchingServices}
+                                    className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition disabled:opacity-50"
+                                    value={formData.service}
+                                    onChange={(e) => {
+                                       const svc = services.find(s => s.name === e.target.value);
+                                       setFormData({...formData, service: e.target.value, price: svc?.price?.toString() || ""});
+                                    }}
+                                 >
+                                    <option value="">{fetchingServices ? "Syncing..." : "Select Service"}</option>
+                                    {services.map(svc => (
+                                       <option key={svc._id} value={svc.name}>{svc.name}</option>
+                                    ))}
+                                 </select>
+                              </div>
+                              <div className="flex items-center space-x-4 pt-8">
+                                 <button
+                                    type="button"
+                                    onClick={() => setStep(1)}
+                                    className="flex-1 py-5 bg-gray-50 text-gray-400 rounded-3xl font-bold text-[11px] uppercase tracking-widest italic hover:bg-gray-100 transition-all active:scale-95"
+                                 >
+                                    Backward
+                                 </button>
+                                 <button
+                                    type="button"
+                                    onClick={() => {
+                                       if (!formData.service) return toast.error("Define Service Parameters");
+                                       setStep(3);
+                                    }}
+                                    className="flex-[1.5] py-5 bg-blue-600 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] italic shadow-xl shadow-blue-600/20 hover:bg-black transition-all active:scale-95 flex items-center justify-center space-x-2"
+                                 >
+                                    <span>Next</span>
+                                    <ArrowRight size={16} />
+                                 </button>
+                              </div>
+                           </motion.div>
+                        )}
+
+                        {step === 3 && (
+                           <motion.div
+                              key="step3"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="space-y-8"
+                           >
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                 <div className="md:col-span-1 space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">City Origin</label>
+                                    <select
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       value={formData.city}
+                                       onChange={(e) => setFormData({...formData, city: e.target.value})}
+                                    >
+                                       <option value="Jaipur">Jaipur (Active Status)</option>
+                                    </select>
+                                 </div>
+                                 <div className="md:col-span-2 space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">PIN Code</label>
+                                    <input
+                                       type="text"
+                                       required
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       placeholder="6-digit ZIP"
+                                       value={formData.pincode}
+                                       onChange={(e) => setFormData({...formData, pincode: e.target.value})}
+                                    />
+                                 </div>
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Address</label>
+                                 <input
+                                    type="text"
+                                    required
+                                    className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                    placeholder="Physical Location Node"
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                                 />
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Schedule Date</label>
+                                    <input
+                                       type="date"
+                                       required
+                                       min={new Date().toISOString().split('T')[0]}
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       value={formData.bookingDate}
+                                       onChange={(e) => setFormData({...formData, bookingDate: e.target.value})}
+                                    />
+                                 </div>
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 italic">Time Matrix</label>
+                                    <select
+                                       required
+                                       className="w-full px-5 py-5 rounded-[2rem] bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition"
+                                       value={formData.bookingTime}
+                                       onChange={(e) => setFormData({...formData, bookingTime: e.target.value})}
+                                    >
+                                       <option value="">Select Window</option>
+                                       <option value="8:00 AM To 10:00 AM">08:00 - 10:00</option>
+                                       <option value="10:00 AM To 12:00 PM">10:00 - 12:00</option>
+                                       <option value="12:00 PM To 2:00 PM">12:00 - 14:00</option>
+                                       <option value="2:00 PM To 4:00 PM">14:00 - 16:00</option>
+                                       <option value="4:00 PM To 6:00 PM">16:00 - 18:00</option>
+                                       <option value="6:00 PM To 8:00 PM">18:00 - 20:00</option>
+                                       <option value="8:00 PM To 10:00 PM">20:00 - 22:00</option>
+                                    </select>
+                                 </div>
+                              </div>
+
+                              <div className="flex items-center space-x-4 pt-8">
+                                 <button
+                                    type="button"
+                                    onClick={() => setStep(2)}
+                                    className="flex-1 py-5 bg-gray-50 text-gray-400 rounded-3xl font-bold text-[11px] uppercase tracking-widest italic hover:bg-gray-100 transition-all active:scale-95"
+                                 >
+                                    Backward
+                                 </button>
+                                 <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-[1.5] py-5 bg-blue-600 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] italic shadow-xl shadow-blue-600/20 hover:bg-black transition-all active:scale-95 flex items-center justify-center space-x-2"
+                                 >
+                                    {loading ? <Loader2 className="animate-spin" size={18} /> : (
+                                       <>
+                                          <span>Submit</span>
+                                          <ArrowRight size={16} />
+                                       </>
+                                    )}
+                                 </button>
+                              </div>
+                           </motion.div>
+                        )}
+                     </AnimatePresence>
                   </form>
                </div>
             ) : (

@@ -5,14 +5,13 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   Calendar, 
-  Settings, 
   LogOut, 
   User, 
   Home,
   Menu,
   X
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 export default function DashboardLayout({
   children,
@@ -20,7 +19,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  const name = session?.user?.name || "Member";
+  const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
@@ -48,7 +51,7 @@ export default function DashboardLayout({
            <SidebarLink href="/dashboard" icon={<LayoutDashboard size={20}/>} label="Overview" active={pathname === "/dashboard"} />
            <SidebarLink href="/dashboard/bookings" icon={<Calendar size={20}/>} label="Bookings" active={pathname === "/dashboard/bookings"} />
            <SidebarLink href="/dashboard/profile" icon={<User size={20}/>} label="Your Profile" active={pathname === "/dashboard/profile"} />
-           <SidebarLink href="/dashboard/settings" icon={<Settings size={20}/>} label="Settings" active={pathname === "/dashboard/settings"} />
+
         </nav>
 
         <div className="p-8 border-t border-gray-100 mt-auto space-y-4">
@@ -69,9 +72,9 @@ export default function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-12 lg:p-16 relative">
           <div className="absolute top-10 right-16 hidden lg:flex items-center space-x-4">
-             <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold">JD</div>
+             <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold">{initials}</div>
              <div className="text-right">
-                <div className="text-sm font-bold text-gray-900">Rahul Sharma</div>
+                <div className="text-sm font-bold text-gray-900">{name}</div>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Verified User</div>
              </div>
           </div>
