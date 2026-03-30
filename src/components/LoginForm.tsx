@@ -3,6 +3,7 @@ import React, { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 import { Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
 
 interface LoginFormProps {
@@ -117,7 +118,7 @@ const LoginFormContent = ({ title, subtitle, redirectTo, requiredRole }: LoginFo
         <div>
            <div className="flex items-center justify-between mb-1">
              <label className={loginStyles.label}>Password</label>
-             <a href="#" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition">Forgot?</a>
+              <Link href="/forgot-password" title="Recover Password" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition">Forgot?</Link>
            </div>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />

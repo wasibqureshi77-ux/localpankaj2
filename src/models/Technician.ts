@@ -11,8 +11,5 @@ const TechnicianSchema = new Schema(
   { timestamps: true }
 );
 
-if (mongoose.models.Technician) {
-  delete mongoose.models.Technician;
-}
-
-export const Technician = mongoose.model("Technician", TechnicianSchema);
+export const Technician = models.Technician || model("Technician", TechnicianSchema);
+export default Technician;

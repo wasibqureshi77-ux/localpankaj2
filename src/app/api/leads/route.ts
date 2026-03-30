@@ -1,12 +1,53 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import { Lead } from "@/models/Lead";
+import { Technician } from "@/models/Technician"; // Required for population
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
+    const phone = searchParams.get("phone");
+
     await connectDB();
-    const leads = await Lead.find({}).sort({ createdAt: -1 });
     
+    // Force model registration for population stability
+    if (!mongoose.models.Technician) {
+       await import("@/models/Technician");
+    }
+    if (!mongoose.models.User) {
+       await import("@/models/User");
+    }
+
+    let query = {};
+    if (email || phone) {
+      const orConditions = [];
+      if (email) orConditions.push({ email });
+      if (phone && phone.trim() !== "") {
+        const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+        if (cleanPhone.length === 10) {
+          orConditions.push({ phone: { $regex: cleanPhone + "$" } });
+        }
+      }
+      
+      if (orConditions.length > 0) {
+        query = { $or: orConditions };
+      }
+    }
+
+    console.log("Telemetry Search Query:", JSON.stringify(query));
+    console.log("Registered Models:", Object.keys(mongoose.models));
+    let leads;
+    try {
+      leads = await Lead.find(query).sort({ createdAt: -1 }).populate({
+        path: "assignedTechnician",
+        strictPopulate: false
+      });
+    } catch (popErr: any) {
+       console.error("POPULATION_FAILURE:", popErr);
+       leads = await Lead.find(query).sort({ createdAt: -1 }); // Fallback to unpopulated
+    }    
     // Calculate stats
     const stats = {
       total: leads.length,
@@ -17,6 +58,7 @@ export async function GET() {
 
     return NextResponse.json({ leads, stats });
   } catch (error: any) {
+    console.error("TELEMETRY_SYNC_CRASH:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

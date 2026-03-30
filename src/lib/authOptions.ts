@@ -50,12 +50,13 @@ export const authOptions: NextAuthOptions = {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
+            phone: user.phone,
             role: user.role,
-          };
+          } as any;
         }
 
         // Standard Email/Phone + Password
-        const identifier = credentials?.email; // This could be email or phone
+        const identifier = credentials?.email;
         if (!identifier || !credentials?.password) {
           throw new Error("Missing credentials");
         }
@@ -66,6 +67,7 @@ export const authOptions: NextAuthOptions = {
               { phone: identifier }
            ]
         });
+        
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
         }
@@ -83,23 +85,26 @@ export const authOptions: NextAuthOptions = {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
+          phone: user.phone,
           role: user.role,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = user.role;
+        token.phone = user.phone;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (token) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.phone = token.phone;
       }
       return session;
     },
