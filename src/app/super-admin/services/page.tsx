@@ -22,7 +22,8 @@ import {
   Filter,
   X,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  Star
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -49,7 +50,8 @@ export default function ServicesManagement() {
     name: "",
     category: "APPLIANCE",
     iconName: "WashingMachine",
-    description: ""
+    description: "",
+    isBestSeller: false
   });
 
   useEffect(() => {
@@ -90,7 +92,8 @@ export default function ServicesManagement() {
       name: service.name,
       category: service.category,
       iconName: service.iconName,
-      description: service.description || ""
+      description: service.description || "",
+      isBestSeller: service.isBestSeller || false
     });
     setShowModal(true);
   };
@@ -109,7 +112,13 @@ export default function ServicesManagement() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditId(null);
-    setFormData({ name: "", category: "APPLIANCE", iconName: "WashingMachine", description: "" });
+    setFormData({ 
+        name: "", 
+        category: "APPLIANCE", 
+        iconName: "WashingMachine", 
+        description: "",
+        isBestSeller: false 
+    });
   };
 
   const filteredServices = services.filter(s => 
@@ -181,6 +190,19 @@ export default function ServicesManagement() {
                       placeholder="e.g. AC DEEP CLEANING"
                     />
                  </div>
+                 
+                 <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-100 rounded-xl group/best transition-all cursor-pointer select-none"
+                      onClick={() => setFormData({...formData, isBestSeller: !formData.isBestSeller})}>
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                         formData.isBestSeller ? 'bg-orange-500 border-orange-500 text-white' : 'border-orange-200 bg-white'
+                    }`}>
+                        {formData.isBestSeller && <Star size={14} fill="currentColor" />}
+                    </div>
+                    <div>
+                        <div className="text-[11px] font-black text-orange-600 uppercase tracking-[0.1em]">Best Seller Recognition</div>
+                        <div className="text-[10px] font-bold text-orange-400 mt-0.5">Toggle this to mark this service as a top-selling offering.</div>
+                    </div>
+                 </div>
 
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -240,11 +262,21 @@ function ServiceSection({ title, services, onEdit, onDelete }: any) {
              services.map((s: any) => (
                 <div key={s._id} className="flex items-center justify-between p-4 rounded-lg group hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-100 transition-all shadow-sm">
+                      <div className="h-10 w-10 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-100 transition-all shadow-sm relative">
                          {React.createElement((require("lucide-react") as any)[s.iconName || "Settings2"] || Settings2, { size: 20 })}
+                         {s.isBestSeller && (
+                            <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-0.5 border border-white shadow-sm scale-75">
+                                <Star size={8} fill="currentColor" />
+                            </div>
+                         )}
                       </div>
                       <div>
-                         <div className="font-bold text-sm text-slate-900 uppercase tracking-tight">{s.name}</div>
+                         <div className="flex items-center gap-2">
+                             <div className="font-bold text-sm text-slate-900 uppercase tracking-tight">{s.name}</div>
+                             {s.isBestSeller && (
+                                <span className="bg-orange-100 text-orange-600 text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-orange-200 tracking-widest">Best Seller</span>
+                             )}
+                         </div>
                          <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-wider font-mono">/{s.slug}</div>
                       </div>
                    </div>

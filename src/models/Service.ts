@@ -12,6 +12,7 @@ const ServiceSchema = new Schema(
     iconName: { type: String, default: "WashingMachine" },
     description: { type: String },
     isActive: { type: String, enum: ["ACTIVE", "INACTIVE"], default: "ACTIVE" },
+    isBestSeller: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

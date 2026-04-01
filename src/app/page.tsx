@@ -143,6 +143,7 @@ const HomePage = () => {
                   iconName={s.iconName} 
                   label={s.name} 
                   href={`/services/${s.slug}`} 
+                  isBestSeller={!!s.isBestSeller}
                 />
               ))}
               {applianceServices.length === 0 && (
@@ -163,6 +164,7 @@ const HomePage = () => {
                   iconName={s.iconName} 
                   label={s.name} 
                   href={`/services/${s.slug}`} 
+                  isBestSeller={!!s.isBestSeller}
                 />
               ))}
               {homeServices.length === 0 && (
@@ -339,23 +341,47 @@ const DynamicIcon = ({ name, size = 40 }: { name: string, size?: number }) => {
   return <IconComponent size={size} />;
 };
 
-const ServiceBox = ({ iconName, label, href }: any) => (
-  <Link href={href} className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center group hover:border-blue-600 transition-all duration-300 shadow-sm hover:shadow-xl relative overflow-hidden">
-     <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500 transform -translate-y-full group-hover:translate-y-0 transition-transform" />
-     <div className="text-blue-900 group-hover:scale-110 transition-transform mb-4 sm:mb-6">
-        <DynamicIcon name={iconName} />
+const ServiceBox = ({ iconName, label, href, isBestSeller }: any) => (
+  <Link href={href} className="bg-white border-2 border-zinc-100 rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center group hover:border-blue-600 transition-all duration-500 shadow-sm hover:shadow-2xl relative overflow-hidden">
+     <div className="absolute top-0 left-0 right-0 h-2 bg-blue-600 transform -translate-y-full group-hover:translate-y-0 transition-transform" />
+     
+     {isBestSeller && (
+        <div className="absolute top-6 right-6 bg-orange-500 text-white p-2 rounded-full shadow-2xl shadow-orange-500/40 z-20 animate-bounce">
+            <LucideIcons.Star size={14} fill="currentColor" strokeWidth={3} />
+        </div>
+     )}
+
+     <div className="text-blue-900 group-hover:scale-110 transition-transform mb-8">
+        <DynamicIcon name={iconName} size={52} />
      </div>
-     <div className="text-[9px] sm:text-[10px] font-black text-gray-950 uppercase tracking-widest leading-relaxed">{label}</div>
+     <div className="flex flex-col items-center space-y-3">
+        <div className="text-[16px] sm:text-[18px] font-black text-zinc-950 uppercase tracking-wider leading-tight px-4">{label}</div>
+        {isBestSeller && (
+            <span className="text-[9px] font-black bg-orange-100 text-orange-600 px-4 py-1.5 rounded-full uppercase tracking-[0.2em] border-2 border-orange-200">Best Seller</span>
+        )}
+     </div>
   </Link>
 );
 
-const HomeRepairBox = ({ iconName, label, href }: any) => (
-  <Link href={href} className="w-full md:w-56 h-40 sm:h-48 bg-[#1e448a] border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center group hover:bg-[#15346d] transition-all relative overflow-hidden shadow-2xl">
-     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-white transform -translate-y-full group-hover:translate-y-0 transition-transform" />
-     <div className="text-white mb-4 sm:mb-6 transform group-hover:-translate-y-2 transition-transform">
-        <DynamicIcon name={iconName} />
+const HomeRepairBox = ({ iconName, label, href, isBestSeller }: any) => (
+  <Link href={href} className="w-full md:w-64 h-56 sm:h-64 bg-blue-900 border-2 border-white/20 rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center group hover:bg-blue-950 transition-all relative overflow-hidden shadow-2xl">
+     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-2 bg-white transform -translate-y-full group-hover:translate-y-0 transition-transform" />
+     
+     {isBestSeller && (
+        <div className="absolute top-6 right-6 bg-white text-blue-600 p-2 rounded-full shadow-2xl z-20">
+            <LucideIcons.Star size={14} fill="currentColor" strokeWidth={3} />
+        </div>
+     )}
+
+     <div className="text-white mb-8 transform group-hover:-translate-y-2 transition-transform">
+        <DynamicIcon name={iconName} size={52} />
      </div>
-     <div className="text-[9px] sm:text-[10px] font-black text-white uppercase tracking-[0.2em]">{label}</div>
+     <div className="flex flex-col items-center space-y-3">
+        <div className="text-[16px] sm:text-[18px] font-black text-white uppercase tracking-[0.2em] px-4">{label}</div>
+        {isBestSeller && (
+            <span className="text-[9px] font-black bg-white/20 text-white px-4 py-1.5 rounded-full uppercase tracking-[0.2em] border-2 border-white/30 backdrop-blur-md">Best Seller</span>
+        )}
+     </div>
   </Link>
 );
 

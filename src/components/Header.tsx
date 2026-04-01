@@ -76,7 +76,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className={`hidden md:flex items-center space-x-8 font-extrabold text-[10px] uppercase tracking-[0.2em] ${isScrolled ? "text-gray-900" : "text-white"}`}>
+        <nav className={`hidden md:flex items-center space-x-10 font-black text-[13px] lg:text-[15px] uppercase tracking-widest ${isScrolled ? "text-zinc-900" : "text-white"}`}>
           <Link href="/" className="hover:text-blue-500 transition">Home</Link>
           <Link href="/about" className="hover:text-blue-500 transition">About</Link>
           
@@ -89,11 +89,11 @@ const Header = () => {
             <div className="absolute left-0 top-full pt-4 opacity-0 invisible group-hover/services:opacity-100 group-hover/services:visible transition-all duration-300">
                <div className="w-64 bg-white text-gray-950 rounded-3xl shadow-2xl border border-gray-100 p-6 space-y-2">
                   <Link href="/services?category=APPLIANCE" className="flex items-center justify-between p-4 hover:bg-blue-50 rounded-2xl transition-all group/item">
-                     <span className="font-black text-[10px] uppercase tracking-widest">Appliance Repair</span>
+                     <span className="font-bold text-[13px] uppercase tracking-wider">Appliance Repair</span>
                      <ChevronRight size={14} className="text-blue-600 opacity-0 group-hover/item:opacity-100 transform translate-x-[-10px] group-hover/item:translate-x-0 transition-all" />
                   </Link>
                   <Link href="/services?category=HOME" className="flex items-center justify-between p-4 hover:bg-blue-50 rounded-2xl transition-all group/item">
-                     <span className="font-black text-[10px] uppercase tracking-widest">Home Repair</span>
+                     <span className="font-bold text-[13px] uppercase tracking-wider">Home Repair</span>
                      <ChevronRight size={14} className="text-blue-600 opacity-0 group-hover/item:opacity-100 transform translate-x-[-10px] group-hover/item:translate-x-0 transition-all" />
                   </Link>
                </div>
@@ -157,8 +157,8 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-xl py-8 px-8 animate-in slide-in-from-top-4 duration-300">
-          <nav className="flex flex-col space-y-6 font-black text-xs uppercase tracking-[0.3em] text-gray-950">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-2xl py-12 px-8 animate-in slide-in-from-top-6 duration-500 rounded-b-[2rem]">
+          <nav className="flex flex-col space-y-8 font-black text-base sm:text-lg uppercase tracking-[0.2em] text-zinc-950">
              <Link href="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
              <Link href="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
              <Link href="/services" onClick={() => setIsMenuOpen(false)}>Expert Services</Link>
