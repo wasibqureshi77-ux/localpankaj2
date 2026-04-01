@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { 
@@ -12,14 +13,20 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  MoreVertical,
+  X,
+  Filter,
+  Search
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-export default function TechniciansPage() {
+export default function SuperAdminTechniciansPage() {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -29,23 +36,8 @@ export default function TechniciansPage() {
   });
 
   const specialtiesOptions = [
-    "Electrician",
-    "AC Repair",
-    "Plumber",
-    "Appliances",
-    "Carpenter",
-    "Painter",
-    "Cleaning"
+    "Electrician", "AC Repair", "Plumber", "Appliances", "Carpenter", "Painter", "Cleaning"
   ];
-
-  const toggleSpecialty = (spec: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialties: prev.specialties.includes(spec)
-        ? prev.specialties.filter(s => s !== spec)
-        : [...prev.specialties, spec]
-    }));
-  };
 
   const fetchTechnicians = async () => {
     try {
@@ -61,6 +53,15 @@ export default function TechniciansPage() {
   useEffect(() => {
     fetchTechnicians();
   }, []);
+
+  const toggleSpecialty = (spec: string) => {
+    setFormData(prev => ({
+      ...prev,
+      specialties: prev.specialties.includes(spec)
+        ? prev.specialties.filter(s => s !== spec)
+        : [...prev.specialties, spec]
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,165 +101,182 @@ export default function TechniciansPage() {
       }
   };
 
+  const filteredTechs = technicians.filter(tech => 
+    tech.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tech.phone.includes(searchTerm)
+  );
+
+  if (loading) {
+     return (
+        <div className="space-y-8 animate-pulse">
+           <div className="h-12 w-64 bg-slate-100 rounded-lg"></div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1,2,3].map(i => <div key={i} className="h-64 bg-slate-50 rounded-xl"></div>)}
+           </div>
+        </div>
+     );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700 font-sans">
-      <div className="flex items-center justify-between pb-6 border-b border-blue-50">
-         <div>
-            <h1 className="text-4xl font-black text-blue-600 uppercase tracking-[0.4em] italic drop-shadow-sm">Technicians</h1>
-            <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.5em] mt-3 italic">Professional Field Force Management Hub</p>
-         </div>
-         <button 
-            onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center space-x-3 px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-blue-600/30 active:scale-95 transition-all hover:bg-black"
-         >
-            {isAdding ? <Settings size={20} className="animate-spin-slow" /> : <UserPlus size={20} />}
-            <span>{isAdding ? "Abort Deployment" : "Register New Unit"}</span>
-         </button>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-8">
+        <div>
+           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Manage Technicians</h1>
+           <p className="text-sm text-slate-500 mt-1">Deploy and manage the professional field force registry.</p>
+        </div>
+        <button 
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm transition-all shadow-blue-100 active:scale-95"
+        >
+          <UserPlus size={18} />
+          Register New Unit
+        </button>
       </div>
 
+      {/* Control Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+         <div className="relative max-w-sm w-full">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search by name or mobile..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+            />
+         </div>
+      </div>
+
+      {/* Technicians Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         {filteredTechs.map((tech) => (
+           <div key={tech._id} className="bg-white border border-slate-200 p-6 rounded-xl relative group hover:border-slate-300 transition-all shadow-sm">
+              <div className="flex items-start justify-between mb-6">
+                 <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-600 transition-colors">
+                       {tech.name[0]}
+                    </div>
+                    <div>
+                       <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight">{tech.name}</h3>
+                       <div className="flex items-center gap-2 mt-0.5">
+                          <StatusIndicator status={tech.status} onClick={() => toggleStatus(tech)} />
+                       </div>
+                    </div>
+                 </div>
+                 <button 
+                    onClick={() => handleDelete(tech._id)}
+                    className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all"
+                 >
+                    <Trash2 size={16} />
+                 </button>
+              </div>
+
+              <div className="space-y-4">
+                 <div className="flex flex-wrap gap-1.5">
+                    {tech.specialties?.map((s: string) => (
+                       <span key={s} className="px-2 py-0.5 bg-slate-50 text-[10px] font-bold text-slate-500 rounded border border-slate-100 uppercase tracking-wider">{s}</span>
+                    ))}
+                 </div>
+                 
+                 <div className="pt-4 border-t border-slate-50 space-y-2.5">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                       <Phone size={14} className="text-slate-400" />
+                       <span className="font-mono tabular-nums">{tech.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                       <Mail size={14} className="text-slate-400" />
+                       <span className="truncate">{tech.email || "No email logged"}</span>
+                    </div>
+                 </div>
+              </div>
+           </div>
+         ))}
+      </div>
+
+      {/* Add Modal */}
       {isAdding && (
-         <div className="bg-white border border-blue-50 p-12 rounded-[3rem] shadow-2xl shadow-blue-900/5 animate-in slide-in-from-top-6 duration-700">
-            <form onSubmit={handleSubmit} className="space-y-12">
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                  <div className="space-y-3">
-                     <label className="text-[10px] font-black text-blue-900 uppercase tracking-[0.3em] ml-1">Personnel Full Name</label>
-                     <input 
-                       required
-                       type="text" 
-                       placeholder="e.g. Rahul Sharma"
-                       className="w-full bg-blue-50 border border-transparent rounded-2xl px-8 py-5 text-sm font-black text-black outline-none focus:bg-white focus:border-blue-600 focus:shadow-xl transition-all"
-                       value={formData.name}
-                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                     />
+         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAdding(false)} />
+            <div className="relative bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-900">Register Field Unit</h3>
+                  <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
+               </div>
+               <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Full Name</label>
+                        <input 
+                          required type="text" value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                     </div>
+                     <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Mobile Vector</label>
+                        <input 
+                          required type="text" value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none font-mono"
+                        />
+                     </div>
                   </div>
-                  <div className="space-y-3">
-                     <label className="text-[10px] font-black text-blue-900 uppercase tracking-[0.3em] ml-1">Mobile Vector</label>
+                  <div className="space-y-1.5">
+                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Email Address</label>
                      <input 
-                       required
-                       type="text" 
-                       placeholder="+91 XXXXX XXXXX"
-                       className="w-full bg-blue-50 border border-transparent rounded-2xl px-8 py-5 text-sm font-black text-black outline-none focus:bg-white focus:border-blue-600 focus:shadow-xl transition-all font-sans"
-                       value={formData.phone}
-                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                     />
-                  </div>
-                  <div className="space-y-3">
-                     <label className="text-[10px] font-black text-blue-900 uppercase tracking-[0.3em] ml-1">Communication Email</label>
-                     <input 
-                       type="email" 
-                       placeholder="rahul@localpankaj.com"
-                       className="w-full bg-blue-50 border border-transparent rounded-2xl px-8 py-5 text-sm font-black text-black outline-none focus:bg-white focus:border-blue-600 focus:shadow-xl transition-all"
-                       value={formData.email}
+                       type="email" value={formData.email}
                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                       className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
                      />
                   </div>
-               </div>
 
-               <div className="space-y-6">
-                  <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em] block">Expertise Manifest (Select All That Apply)</label>
-                  <div className="flex flex-wrap gap-4">
-                     {specialtiesOptions.map(spec => (
-                        <button
-                           key={spec}
-                           type="button"
-                           onClick={() => toggleSpecialty(spec)}
-                           className={`px-8 py-4 rounded-xl border text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 transform ${
-                              formData.specialties.includes(spec)
-                                 ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/30 scale-105"
-                                 : "bg-blue-50 border-transparent text-blue-900 hover:bg-white hover:border-blue-100 hover:shadow-lg"
-                           }`}
-                        >
-                           {spec}
-                        </button>
-                     ))}
+                  <div className="space-y-3">
+                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Expertise Manifest</label>
+                     <div className="flex flex-wrap gap-2">
+                        {specialtiesOptions.map(spec => (
+                           <button
+                              key={spec} type="button"
+                              onClick={() => toggleSpecialty(spec)}
+                              className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold uppercase transition-all ${
+                                 formData.specialties.includes(spec)
+                                    ? "bg-slate-900 border-slate-900 text-white"
+                                    : "bg-slate-50 border-slate-100 text-slate-600 hover:bg-white hover:border-slate-300"
+                              }`}
+                           >
+                              {spec}
+                           </button>
+                        ))}
+                     </div>
                   </div>
-               </div>
 
-               <div className="flex justify-end pt-6">
-                  <button type="submit" className="px-16 py-6 bg-blue-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.5em] hover:bg-black transition-all duration-500 shadow-2xl active:scale-95 italic">Initialize Unit</button>
-               </div>
-            </form>
+                  <div className="pt-4 flex gap-3">
+                     <button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
+                     <button type="submit" className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-100">Initialize Unit</button>
+                  </div>
+               </form>
+            </div>
          </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pb-20">
-         {loading ? (
-            <div className="col-span-full py-32 flex flex-col items-center justify-center space-y-6">
-               <Loader2 className="animate-spin text-blue-600" size={60} />
-               <p className="text-[11px] font-black text-blue-900 uppercase tracking-[0.6em] italic animate-pulse">Syncing Technical Manifest...</p>
-            </div>
-         ) : technicians.length > 0 ? (
-            technicians.map((tech) => (
-               <div key={tech._id} className="bg-white border border-blue-50 p-10 rounded-[3rem] relative group hover:border-blue-200 transition-all duration-700 shadow-2xl shadow-blue-900/5 hover:-translate-y-2">
-                  <div className="flex items-center justify-between mb-8">
-                     <div className="p-5 bg-blue-50 text-blue-600 rounded-2xl shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-all duration-500"><Zap size={24} /></div>
-                     <div className="flex items-center space-x-3">
-                        <StatusBadge status={tech.status} onClick={() => toggleStatus(tech)} />
-                        <button 
-                           onClick={() => handleDelete(tech._id)}
-                           className="p-4 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
-                        >
-                           <Trash2 size={18} />
-                        </button>
-                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                     <h3 className="text-2xl font-black text-black italic tracking-tighter uppercase">{tech.name}</h3>
-                     <div className="flex flex-wrap gap-2 mt-2">
-                        {tech.specialties && tech.specialties.length > 0 ? tech.specialties.map((s: string) => (
-                           <span key={s} className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100/50 shadow-sm">{s}</span>
-                        )) : (
-                           <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest italic">General Operations Specialist</span>
-                        )}
-                     </div>
-                  </div>
-
-                  <div className="mt-10 pt-8 border-t border-blue-50 space-y-6">
-                     <div className="flex items-center space-x-5 text-blue-900">
-                        <div className="p-2 bg-blue-50 rounded-lg"><Phone size={16} className="text-blue-600" /></div>
-                        <span className="text-sm font-black tabular-nums tracking-widest">{tech.phone}</span>
-                     </div>
-                     <div className="flex items-center space-x-5 text-blue-900">
-                        <div className="p-2 bg-blue-50 rounded-lg"><Mail size={16} className="text-blue-600" /></div>
-                        <span className="text-sm font-black tracking-tight underline decoration-blue-200">{tech.email || "NO-IDENTITY-LOGGED"}</span>
-                     </div>
-                  </div>
-
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
-                     <UserPlus size={180} className="text-blue-900" />
-                  </div>
-               </div>
-            ))
-         ) : (
-            <div className="col-span-full py-40 text-center bg-blue-50/50 rounded-[4rem] border-4 border-dashed border-blue-100 shadow-inner">
-               <p className="text-[12px] font-black text-blue-300 uppercase tracking-[0.8em] italic">No active technical units detected in command registry.</p>
-            </div>
-         )}
-      </div>
     </div>
   );
 }
 
-function StatusBadge({ status, onClick }: any) {
-   const styles: any = {
-      ACTIVE: "bg-emerald-50 text-emerald-600 border-emerald-100",
-      BUSY: "bg-amber-50 text-amber-600 border-amber-100",
-      OFFLINE: "bg-blue-50 text-blue-300 border-blue-100"
-   };
-   const icons: any = {
-      ACTIVE: <CheckCircle size={10} />,
-      BUSY: <Clock size={10} />,
-      OFFLINE: <XCircle size={10} />
-   };
-
-   return (
-      <button 
-         onClick={onClick}
-         className={`px-4 py-2 rounded-xl border text-[9px] font-black tracking-[0.2em] uppercase flex items-center space-x-2 transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-95 shadow-sm ${styles[status]}`}
-      >
-         {icons[status]}
-         <span>{status}</span>
-      </button>
-   );
+function StatusIndicator({ status, onClick }: any) {
+  const styles: any = {
+     ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-100",
+     BUSY: "bg-amber-50 text-amber-700 border-amber-100",
+     OFFLINE: "bg-slate-50 text-slate-500 border-slate-100"
+  };
+  return (
+     <button 
+        onClick={onClick}
+        className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all hover:shadow-sm ${styles[status]}`}
+     >
+        <div className={`h-1.5 w-1.5 rounded-full ${
+           status === "ACTIVE" ? "bg-emerald-500" : status === "BUSY" ? "bg-amber-500" : "bg-slate-400"
+        }`} />
+        {status}
+     </button>
+  );
 }

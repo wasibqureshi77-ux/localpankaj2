@@ -1,5 +1,7 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { 
   Users, 
   Search, 
@@ -14,9 +16,11 @@ import {
   ExternalLink,
   ChevronRight,
   User,
-  Star
+  Star,
+  Download,
+  Phone,
+  Shield
 } from "lucide-react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 
 interface UsersManagementTableProps {
@@ -28,6 +32,7 @@ interface UsersManagementTableProps {
 export default function UsersManagementTable({ title, subtitle, roleFilter }: UsersManagementTableProps) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -51,119 +56,159 @@ export default function UsersManagementTable({ title, subtitle, roleFilter }: Us
     fetchUsers();
   }, [roleFilter]);
 
+  const filteredUsers = users.filter(u => 
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.phone?.includes(searchTerm)
+  );
+
   const verifiedPercent = users.length > 0 
     ? Math.round((users.filter(u => u.role !== "USER").length / users.length) * 100) 
     : 0;
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-        <div>
-          <h1 className="text-6xl font-black text-gray-950 tracking-tighter italic">
-            {title.split(" ")[0]} <span className="text-blue-600">{title.split(" ").slice(1).join(" ")}</span>
-          </h1>
-          <p className="text-gray-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-4">{subtitle}</p>
+  if (loading) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="h-10 w-64 bg-slate-100 rounded-lg"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="h-32 bg-slate-50 rounded-xl"></div>
+           <div className="h-32 bg-slate-50 rounded-xl"></div>
         </div>
-        
-        <div className="flex items-center space-x-6">
-           <button className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition shadow-xl hover:bg-blue-700 shadow-blue-600/20 transform active:scale-95 flex items-center space-x-3">
-              <UserPlus size={16} />
-              <span>Create Record</span>
+        <div className="h-96 bg-slate-50 rounded-xl"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-8">
+        <div>
+           <h1 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
+           <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+        </div>
+        <div className="flex items-center gap-3">
+           <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+              <Download size={16} />
+              Export Directory
+           </button>
+           <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm shadow-blue-100 transition-all active:scale-95">
+              <UserPlus size={18} />
+              Create Record
            </button>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-[3rem] overflow-hidden shadow-2xl shadow-gray-200/50">
-         <div className="p-10 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex items-center space-x-6">
-               <div className="px-5 py-2.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center space-x-2">
-                  <ShieldCheck size={14} />
-                  <span>Authority Stream: {verifiedPercent}%</span>
-               </div>
-               <div className="px-5 py-2.5 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center space-x-2">
-                  <Users size={14} />
-                  <span>Total Records: {users.length}</span>
-               </div>
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Users size={18}/></div>
+               <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">LIVE</span>
             </div>
-
-            <div className="flex items-center space-x-4">
-               <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={16} />
-                  <input 
-                    type="text" 
-                    placeholder="Search registry..." 
-                    className="pl-12 pr-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-gray-200 outline-none transition-all font-bold text-[10px] uppercase tracking-widest w-64 shadow-inner"
-                  />
-               </div>
-               <button className="p-4 bg-gray-50 text-gray-400 rounded-2xl border border-transparent hover:bg-white hover:border-gray-200 transition"><Filter size={20}/></button>
-            </div>
+            <p className="text-2xl font-bold text-slate-900">{users.length}</p>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Total Records</h3>
          </div>
+         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+               <div className="p-2 bg-slate-50 text-slate-600 rounded-lg"><Shield size={18}/></div>
+               <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">AUTH</span>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{verifiedPercent}%</p>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Authority Stream</h3>
+         </div>
+      </div>
 
+      {/* Control Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+         <div className="relative max-w-sm w-full">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search registry by name, email or phone..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+            />
+         </div>
+         <div className="flex items-center gap-2">
+            <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 bg-white rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50">
+               <Filter size={14} />
+               Filters
+            </button>
+         </div>
+      </div>
+
+      {/* Users Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
          <div className="overflow-x-auto">
             <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50 text-[10px] uppercase tracking-[0.3em] font-black text-gray-400">
-                     <th className="px-10 py-6">Identity Portal</th>
-                     <th className="px-10 py-6">Privilege Level</th>
-                     <th className="px-10 py-6">Registration</th>
-                     <th className="px-10 py-6 text-blue-600 font-black">Requests Till Now</th>
-                     <th className="px-10 py-6">Strategy</th>
+               <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest px-6">Identity Portal</th>
+                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Privilege Level</th>
+                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Registration</th>
+                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-blue-600">Requests Processed</th>
+                     <th className="px-6 py-3"></th>
                   </tr>
                </thead>
-               <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr><td colSpan={5} className="p-20 text-center text-gray-400 animate-pulse font-black text-xs uppercase tracking-[0.4em] italic">Scanning System Directories...</td></tr>
-                  ) : users.length > 0 ? (
-                    users.map((user: any) => (
-                      <UserRow key={user._id} user={user} />
-                    ))
+               <tbody className="divide-y divide-slate-100">
+                  {filteredUsers.length > 0 ? (
+                     filteredUsers.map((user: any) => (
+                        <tr key={user._id} className="hover:bg-slate-50/30 transition-colors group cursor-pointer">
+                           <td className="px-6 py-5">
+                              <div className="flex items-center gap-4">
+                                 <div className="h-12 w-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 font-bold text-lg group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all">
+                                    {user.name ? user.name[0] : "U"}
+                                 </div>
+                                 <div className="min-w-0">
+                                    <div className="text-sm font-bold text-slate-900 uppercase tracking-tight truncate">{user.name}</div>
+                                    <div className="flex flex-col mt-0.5">
+                                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">{user.phone}</span>
+                                       <span className="text-[10px] font-bold text-blue-600 opacity-60 lowercase truncate">{user.email}</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </td>
+                           <td className="px-6 py-5">
+                              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest border uppercase ${
+                                 ["ADMIN", "MANAGER", "EDITOR"].includes(user.role) 
+                                 ? "bg-blue-50 text-blue-700 border-blue-100" 
+                                 : "bg-slate-50 text-slate-500 border-slate-100"
+                              }`}>
+                                 {user.role}
+                              </span>
+                           </td>
+                           <td className="px-6 py-5 whitespace-nowrap">
+                              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                                 {new Date(user.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
+                           </td>
+                           <td className="px-6 py-5">
+                              <div className="flex items-center gap-3">
+                                 <div className="text-xl font-bold text-slate-900 tabular-nums">{user.requestCount || 0}</div>
+                                 <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-3 line-clamp-2">Inquiries<br/>Captured</div>
+                              </div>
+                           </td>
+                           <td className="px-6 py-5 text-right">
+                              <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-all">
+                                 <MoreHorizontal size={18} />
+                              </button>
+                           </td>
+                        </tr>
+                     ))
                   ) : (
-                    <tr><td colSpan={5} className="p-20 text-center text-gray-400 font-bold text-xs uppercase tracking-widest">No matching records found.</td></tr>
+                     <tr>
+                        <td colSpan={5} className="px-6 py-20 text-center text-slate-400 text-sm font-medium italic">No matching records found in the directory.</td>
+                     </tr>
                   )}
                </tbody>
             </table>
          </div>
+         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Authority Stream Sync: {new Date().toLocaleTimeString()}</p>
+         </div>
       </div>
     </div>
-  );
-}
-
-function UserRow({ user }: any) {
-  const isStaff = ["ADMIN", "EDITOR", "MANAGER"].includes(user.role);
-  const registrationDate = new Date(user.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-  return (
-    <tr className="hover:bg-gray-50/50 transition-colors group">
-       <td className="px-10 py-8">
-          <div className="flex items-center space-x-4">
-             <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center font-black text-gray-400 text-xl border border-gray-200 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                {user.name ? user.name[0] : "U"}
-             </div>
-             <div>
-                <div className="text-lg font-black text-gray-950 tracking-tight italic group-hover:text-blue-600 transition-colors uppercase">{user.name}</div>
-                <div className="flex items-center space-x-3 mt-1.5 font-sans">
-                   <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{user.phone}</div>
-                   <div className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">|</div>
-                   <div className="text-[10px] font-bold text-gray-500 lowercase tracking-tight">{user.email}</div>
-                </div>
-             </div>
-          </div>
-       </td>
-       <td className="px-10 py-8">
-          <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black tracking-widest uppercase text-white shadow-xl ${isStaff ? 'bg-blue-600 shadow-blue-600/20' : 'bg-gray-100 text-gray-400 shadow-none'}`}>{user.role}</span>
-       </td>
-       <td className="px-10 py-8 text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">{registrationDate}</td>
-       <td className="px-10 py-8">
-          <div className="flex items-center space-x-4">
-             <div className="text-2xl font-black text-blue-600 italic drop-shadow-sm">{user.requestCount || 0}</div>
-             <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-3">Requests<br/>Processed</div>
-          </div>
-       </td>
-       <td className="px-10 py-8 text-right underline">
-          <button className="p-3 bg-gray-50 text-gray-400 rounded-xl border border-transparent hover:bg-gray-950 hover:text-white transition-all">
-             <ExternalLink size={18}/>
-          </button>
-       </td>
-    </tr>
   );
 }

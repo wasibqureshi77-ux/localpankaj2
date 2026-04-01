@@ -1,5 +1,7 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { 
   Plus, 
   Trash2, 
@@ -15,9 +17,13 @@ import {
   Waves,
   Thermometer,
   Zap,
-  Hammer
+  Hammer,
+  Search,
+  Filter,
+  X,
+  ChevronRight,
+  MoreVertical
 } from "lucide-react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 
 const ICON_OPTIONS = [
@@ -37,6 +43,8 @@ export default function ServicesManagement() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const [formData, setFormData] = useState({
     name: "",
     category: "APPLIANCE",
@@ -104,78 +112,100 @@ export default function ServicesManagement() {
     setFormData({ name: "", category: "APPLIANCE", iconName: "WashingMachine", description: "" });
   };
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-        <div>
-          <h1 className="text-6xl font-black text-white tracking-tighter italic">Service <span className="text-blue-500">Catalog.</span></h1>
-          <p className="text-gray-500 font-bold uppercase tracking-[0.4em] text-[10px] mt-4">Manage public offerings and categorization.</p>
+  const filteredServices = services.filter(s => 
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+     return (
+        <div className="space-y-8 animate-pulse">
+           <div className="h-12 w-64 bg-slate-100 rounded-lg"></div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="h-[400px] bg-slate-50 rounded-xl"></div>
+              <div className="h-[400px] bg-slate-50 rounded-xl"></div>
+           </div>
         </div>
-        
+     );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-8">
+        <div>
+           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Service Catalog</h1>
+           <p className="text-sm text-slate-500 mt-1">Manage public offerings, pricing, and display categorization.</p>
+        </div>
         <button 
           onClick={() => setShowModal(true)}
-          className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition shadow-2xl shadow-blue-500/20 active:scale-95 flex items-center space-x-3"
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm transition-all shadow-blue-100 active:scale-95"
         >
-          <Plus size={16} />
-          <span>Add New Service</span>
+          <Plus size={18} />
+          Register New Service
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-         <ServiceCategorySection 
+      {/* Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+         <ServiceSection 
             title="Appliance Repair" 
-            services={services.filter(s => s.category === "APPLIANCE")} 
-            loading={loading}
+            services={filteredServices.filter(s => s.category === "APPLIANCE")} 
             onEdit={handleEdit}
             onDelete={handleDelete}
          />
-         <ServiceCategorySection 
-            title="Home Repair" 
-            services={services.filter(s => s.category === "HOME")} 
-            loading={loading}
+         <ServiceSection 
+            title="Home Maintenance" 
+            services={filteredServices.filter(s => s.category === "HOME")} 
             onEdit={handleEdit}
             onDelete={handleDelete}
-            dark
          />
       </div>
 
+      {/* Registration Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md">
-           <div className="bg-gray-900 border border-white/10 w-full max-w-xl rounded-[3rem] p-12 space-y-8 shadow-2xl">
-              <h2 className="text-3xl font-black text-white italic tracking-tighter">{editId ? 'Update Service.' : 'Register New Service.'}</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Service Name</label>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={handleCloseModal} />
+           <div className="relative bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                 <h3 className="text-base font-bold text-slate-900">{editId ? 'Update Service Details' : 'Register New Service'}</h3>
+                 <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
+              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                 <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Service Name</label>
                     <input 
-                      required
-                      value={formData.name}
+                      required value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-xs"
-                      placeholder="E.G. CHIMNEY REPAIR"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none uppercase tracking-wide"
+                      placeholder="e.g. AC DEEP CLEANING"
                     />
                  </div>
 
-                 <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Display Category</label>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Display Category</label>
                        <select 
                          value={formData.category}
                          onChange={(e) => setFormData({...formData, category: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-[10px] cursor-pointer"
+                         className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
                        >
-                          <option value="APPLIANCE" className="bg-gray-900 text-white">Appliance Repair</option>
-                          <option value="HOME" className="bg-gray-900 text-white">Home Repair</option>
+                          <option value="APPLIANCE">Appliance Repair</option>
+                          <option value="HOME">Home Repair</option>
                        </select>
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select Icon</label>
+                    <div className="space-y-1.5">
+                       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Visual Icon</label>
                        <div className="flex flex-wrap gap-2">
                           {ICON_OPTIONS.map(opt => (
                             <button
-                              key={opt.name}
-                              type="button"
+                              key={opt.name} type="button"
                               onClick={() => setFormData({...formData, iconName: opt.name})}
-                              className={`p-3 rounded-xl border transition-all ${formData.iconName === opt.name ? 'border-blue-500 bg-blue-500/20 text-blue-400' : 'border-white/5 bg-white/5 text-gray-500'}`}
+                              className={`p-2 rounded-lg border transition-all ${
+                                formData.iconName === opt.name 
+                                  ? 'border-blue-600 bg-blue-50 text-blue-600' 
+                                  : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-300'
+                              }`}
                             >
                                {opt.icon}
                             </button>
@@ -184,11 +214,11 @@ export default function ServicesManagement() {
                     </div>
                  </div>
 
-                 <div className="flex items-center space-x-4 pt-6">
-                    <button type="submit" className="flex-1 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/10">
+                 <div className="pt-4 flex gap-3">
+                    <button type="button" onClick={handleCloseModal} className="flex-1 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
+                    <button type="submit" className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-100">
                        {editId ? 'Apply Changes' : 'Publish Service'}
                     </button>
-                    <button type="button" onClick={handleCloseModal} className="px-8 py-5 bg-white/5 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5">Cancel</button>
                  </div>
               </form>
            </div>
@@ -198,43 +228,38 @@ export default function ServicesManagement() {
   );
 }
 
-function ServiceCategorySection({ title, services, loading, onEdit, onDelete, dark }: any) {
+function ServiceSection({ title, services, onEdit, onDelete }: any) {
   return (
-    <div className={`p-10 rounded-[3rem] border ${dark ? 'bg-[#1e448a]/20 border-blue-500/20' : 'bg-white/5 border-white/10'}`}>
-       <h3 className="text-2xl font-black text-white italic tracking-tight mb-8">{title}</h3>
-       <div className="space-y-4">
-          {loading ? (
-             <div className="py-10 text-center animate-pulse text-gray-600 font-black text-[10px] uppercase tracking-widest">Accessing catalog...</div>
-          ) : services.length > 0 ? (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{services.length} items</span>
+       </div>
+       <div className="divide-y divide-slate-50 p-2 overflow-y-auto max-h-[500px]">
+          {services.length > 0 ? (
              services.map((s: any) => (
-                <div key={s._id} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-all">
-                   <div className="flex items-center space-x-4">
-                      <div className="p-3 bg-gray-900 rounded-xl text-blue-400 border border-white/5">
+                <div key={s._id} className="flex items-center justify-between p-4 rounded-lg group hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                   <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-100 transition-all shadow-sm">
                          {React.createElement((require("lucide-react") as any)[s.iconName || "Settings2"] || Settings2, { size: 20 })}
                       </div>
                       <div>
-                         <div className="font-black text-xs text-white uppercase tracking-widest">{s.name}</div>
-                         <div className="text-[8px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1 italic">slug: {s.slug}</div>
+                         <div className="font-bold text-sm text-slate-900 uppercase tracking-tight">{s.name}</div>
+                         <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-wider font-mono">/{s.slug}</div>
                       </div>
                    </div>
-                   <div className="flex items-center space-x-2">
-                       <button 
-                          onClick={() => onEdit(s)}
-                          className="p-2 text-gray-500 hover:text-white transition"
-                       >
-                          <Edit3 size={16}/>
+                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button onClick={() => onEdit(s)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded-md transition-all shadow-sm border border-transparent hover:border-blue-100">
+                          <Edit3 size={14}/>
                        </button>
-                       <button 
-                          onClick={() => onDelete(s._id)}
-                          className="p-2 text-red-500/50 hover:text-red-500 transition"
-                       >
-                          <Trash2 size={16}/>
+                       <button onClick={() => onDelete(s._id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md transition-all shadow-sm border border-transparent hover:border-rose-100">
+                          <Trash2 size={14}/>
                        </button>
                    </div>
                 </div>
              ))
           ) : (
-             <div className="py-10 text-center text-gray-600 font-black text-[10px] uppercase tracking-widest italic border border-dashed border-white/10 rounded-2xl">No services found.</div>
+             <div className="p-12 text-center text-slate-400 text-xs font-medium uppercase tracking-widest italic opacity-50">Empty Manifest</div>
           )}
        </div>
     </div>
