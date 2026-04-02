@@ -38,19 +38,54 @@ const HomePage = () => {
     fetchData();
   }, []);
 
-  const slides = [
-    "/banner1.png",
-    "/image2.png",
-    "/image3.png"
+  const desktopSlides = [
+    "/banner-1.png",
+    "/banner-2.png",
+    "/banner-3.png"
   ];
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const mobileSlides = [
+    "/mobile-banner-1.png",
+    "/mobile-banner-2.png",
+    "/mobile-banner-3.png"
+  ];
+
+  const [isMobile, setIsMobile] = useState(false);
+  const [[page, direction], setPage] = useState([0, 0]);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const activeSlides = isMobile ? mobileSlides : desktopSlides;
+  const imageIndex = (page % activeSlides.length + activeSlides.length) % activeSlides.length;
+
+  const paginate = (newDirection: number) => {
+    setPage([page + newDirection, newDirection]);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      paginate(1);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [page, activeSlides]);
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? "100%" : "-100%",
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? "100%" : "-100%",
+    })
+  };
 
   const applianceServices = services.filter(s => s.category === "APPLIANCE");
   const homeServices = services.filter(s => s.category === "HOME");
@@ -61,64 +96,57 @@ const HomePage = () => {
       <LeadPopup />
 
       {/* Hero Section */}
-      <section className="relative min-h-[95vh] flex bg-gray-950 overflow-hidden">
+      <section className="relative w-full bg-gray-950 overflow-hidden">
         {/* Slider Background */}
-        <div className="absolute inset-0 z-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentSlide}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 0.6, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              className="absolute inset-0"
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-gray-950/40 via-transparent to-gray-950/60 z-10" />
-              <div 
-                className="w-full h-full bg-cover bg-center" 
-                style={{ backgroundImage: `url('${slides[currentSlide]}')` }}
-              />
-            </motion.div>
+        <div className={`relative w-full overflow-hidden ${isMobile ? "h-[400px]" : ""}`}>
+          {!isMobile && (
+             /* Spacer for desktop to maintain dynamic aspect ratio */
+             <img src={activeSlides[0]} className="w-full h-auto invisible pointer-events-none" aria-hidden="true" />
+          )}
+          
+          <AnimatePresence initial={false} custom={direction}>
+            <motion.img
+              key={page}
+              src={activeSlides[imageIndex]}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "tween", duration: 0.8, ease: "easeInOut" }
+              }}
+              className={`absolute inset-0 w-full h-full block ${isMobile ? "object-cover object-center" : "object-contain"}`}
+            />
           </AnimatePresence>
-        </div>
+          
+          {/* Manual Controls */}
+          <button 
+            onClick={() => paginate(-1)}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-40 p-1.5 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all group"
+          >
+            <LucideIcons.ChevronLeft size={isMobile ? 18 : 24} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+          
+          <button 
+            onClick={() => paginate(1)}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-40 p-1.5 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all group"
+          >
+            <LucideIcons.ChevronRight size={isMobile ? 18 : 24} className="group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
-        <div className="container mx-auto px-4 relative z-20 h-full min-h-[95vh]">
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: 0.5, duration: 0.8 }}
-               className="absolute bottom-28 left-0 right-0 flex flex-col items-center justify-center space-y-5 px-6 md:left-8 md:right-auto md:translate-x-0 md:items-start md:px-0 md:bottom-24"
-            >
-               <button 
-                  onClick={() => (window as any).showLeadPopup?.()}
-                  className="w-full sm:w-auto px-8 sm:px-12 py-4 sm:py-5 bg-blue-600 text-white rounded-full font-extrabold text-base sm:text-lg hover:bg-blue-700 transition-all shadow-2xl shadow-blue-500/40 transform hover:-translate-y-1 active:scale-95 border-2 border-white/10 backdrop-blur-sm uppercase tracking-wider"
-               >
-                  Book a Service Now
-               </button>
-               
-               <a 
-                  href={`tel:${config?.phone || "+919876543210"}`} 
-                  className="w-full sm:w-auto flex items-center justify-center space-x-4 text-white font-black text-sm sm:text-base hover:text-blue-400 transition-all group backdrop-blur-md bg-white/5 px-8 py-4 rounded-full border border-white/10 hover:bg-white/10 uppercase tracking-widest"
-               >
-                  <span className="p-2 rounded-full bg-blue-500 text-white shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-                     <LucideIcons.Phone size={16} />
-                  </span>
-                  <span>Contact Now</span>
-               </a>
-            </motion.div>
-
-            {/* Slide Indicators */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentSlide(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    currentSlide === i ? "bg-blue-600 w-8" : "bg-white/30"
-                  }`}
-                />
-              ))}
-            </div>
+          {/* Slide Indicators */}
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 sm:space-x-3 z-30">
+            {activeSlides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage([i, i > imageIndex ? 1 : -1])}
+                className={`w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full transition-all duration-300 ${
+                  imageIndex === i ? "bg-blue-600 w-5 sm:w-7" : "bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 

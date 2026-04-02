@@ -45,10 +45,10 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-gray-100 ${
         isScrolled
-          ? "bg-white/80 backdrop-blur-md shadow-sm py-2"
-          : "bg-transparent py-4 text-white"
+          ? "bg-white/95 backdrop-blur-md shadow-md py-2"
+          : "bg-white py-4"
       }`}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
@@ -76,7 +76,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className={`hidden md:flex items-center space-x-10 font-black text-[13px] lg:text-[15px] uppercase tracking-widest ${isScrolled ? "text-zinc-900" : "text-white"}`}>
+        <nav className="hidden md:flex items-center space-x-10 font-black text-[13px] lg:text-[15px] uppercase tracking-widest text-zinc-900">
           <Link href="/" className="hover:text-blue-500 transition">Home</Link>
           <Link href="/about" className="hover:text-blue-500 transition">About</Link>
           
@@ -107,7 +107,7 @@ const Header = () => {
         <div className="hidden md:flex items-center space-x-4">
            {/* Cart Button */}
            <Link href="/cart" className="relative p-2.5 text-gray-400 hover:text-blue-600 transition group">
-              <ShoppingCart size={24} className={isScrolled ? "text-gray-800" : "text-white"} />
+              <ShoppingCart size={24} className="text-gray-800" />
               <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-white group-hover:scale-110 transition-transform">
                  {cartCount}
               </span>
@@ -123,7 +123,7 @@ const Header = () => {
           {session ? (
             <div className="relative group">
               <button className="flex items-center space-x-1 outline-none">
-                 <User size={24} className={isScrolled ? "text-gray-800" : "text-white"} />
+                 <User size={24} className="text-gray-800" />
               </button>
               <div className="absolute right-0 top-full mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                 <Link href="/dashboard" className="block px-4 py-2 hover:bg-gray-100">Dashboard</Link>
@@ -132,22 +132,22 @@ const Header = () => {
               </div>
             </div>
           ) : (
-             <Link href="/login" className={`p-2.5 rounded-full border ${isScrolled ? "border-gray-300 text-gray-800" : "border-white/30 text-white"} hover:bg-white/10 transition`}>
+             <Link href="/login" className="p-2.5 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 transition">
                <User size={20} />
              </Link>
           )}
         </div>
 
         {/* Mobile Toggle */}
-        <div className="flex items-center space-x-4 md:hidden">
+         <div className="flex items-center space-x-4 md:hidden">
            <Link href="/cart" className="relative p-2 text-gray-400">
-              <ShoppingCart size={24} className={isScrolled ? "text-gray-800" : "text-white"} />
+              <ShoppingCart size={24} className="text-gray-800" />
               <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-lg">
                  {cartCount}
               </span>
            </Link>
            <button
-             className={`${isScrolled ? "text-gray-800" : "text-white"}`}
+             className="text-gray-800"
              onClick={() => setIsMenuOpen(!isMenuOpen)}
            >
              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}

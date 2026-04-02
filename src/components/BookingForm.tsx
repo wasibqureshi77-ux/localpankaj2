@@ -160,7 +160,7 @@ const Button = ({
 
 // --- Form Wizard ---
 
-export default function BookingForm() {
+export default function BookingForm({ cartItems = [] }: { cartItems?: any[] }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -181,6 +181,8 @@ export default function BookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const hasCartItems = cartItems.length > 0;
+
   // Cascading Logic Helpers
   const categories = formData.serviceType ? Object.keys(SERVICE_DATA[formData.serviceType]) : [];
   const specificServices = (formData.serviceType && formData.category) 
@@ -195,7 +197,7 @@ export default function BookingForm() {
       if (!/^\d{10}$/.test(formData.mobile)) newErrors.mobile = "Enter 10-digit number";
       if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Valid email required";
     }
-    if (currentStep === 2) {
+    if (currentStep === 2 && !hasCartItems) {
       if (!formData.serviceType) newErrors.serviceType = "Required";
       if (!formData.category) newErrors.category = "Required";
       if (!formData.specificService) newErrors.specificService = "Required";
@@ -213,13 +215,23 @@ export default function BookingForm() {
 
   const handleNext = () => {
     if (validateStep(step)) {
-      setStep((prev) => prev + 1);
+      // If we have cart items, skip step 2 (Config) and go straight to step 3 (Address)
+      if (step === 1 && hasCartItems) {
+        setStep(3);
+      } else {
+        setStep((prev) => prev + 1);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleBack = () => {
-    setStep((prev) => prev - 1);
+    // If we have cart items, back from step 3 goes to step 1
+    if (step === 3 && hasCartItems) {
+      setStep(1);
+    } else {
+      setStep((prev) => prev - 1);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -229,6 +241,25 @@ export default function BookingForm() {
 
     setIsSubmitting(true);
     try {
+      // Use cart items if available, otherwise use local form selection
+      const orderItems = hasCartItems 
+        ? cartItems.map(item => ({
+            name: item.name,
+            category: item.subCategory || "Service",
+            price: item.price,
+            quantity: 1,
+          }))
+        : [
+            {
+              name: formData.specificService,
+              category: formData.category,
+              price: 0,
+              quantity: 1,
+            }
+          ];
+
+      const totalAmount = orderItems.reduce((sum, i) => sum + i.price, 0);
+
       const payload = {
         name: formData.fullName,
         phone: formData.mobile,
@@ -237,15 +268,8 @@ export default function BookingForm() {
         pincode: formData.pincode,
         city: formData.city,
         state: formData.state,
-        items: [
-          {
-            name: formData.specificService,
-            category: formData.category,
-            price: 0, // Mock price if not available
-            quantity: 1,
-          }
-        ],
-        totalAmount: 0, // Should be calculated
+        items: orderItems,
+        totalAmount: totalAmount,
         paymentMethod: "PAY_ON_VISIT",
         orderStatus: "PENDING",
         source: "ORDER",
@@ -253,9 +277,16 @@ export default function BookingForm() {
 
       const { data } = await axios.post("/api/orders", payload);
       setIsSuccess(true);
+      
+      // Clear cart on success
+      if (hasCartItems) {
+        localStorage.removeItem("cart");
+        window.dispatchEvent(new Event('storage'));
+      }
+      
       toast.success("Order confirmed successfully!");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Strategic deployment failed");
+      toast.error(err.response?.data?.error || "Deployment process failed");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,124 +1,300 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { 
-  PhoneCall, 
+  Phone, 
   Mail, 
   MapPin, 
   Clock, 
   Send,
-  ArrowRight,
-  Globe
+  ShieldCheck,
+  Zap,
+  Map,
+  CheckCircle2
 } from "lucide-react";
 
+// --- Reusable UI Components ---
+
+const ContactCard = ({ icon: Icon, title, description, link, linkText }: any) => (
+  <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
+    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-6">
+      <Icon size={24} />
+    </div>
+    <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+    <p className="text-gray-600 text-sm mb-6 flex-grow leading-relaxed">{description}</p>
+    <a 
+      href={link} 
+      className="text-blue-600 font-semibold text-sm hover:text-blue-700 inline-flex items-center group"
+    >
+      {linkText}
+      <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+    </a>
+  </div>
+);
+
+const InputField = ({ label, id, type = "text", placeholder, required = false, isTextArea = false }: any) => (
+  <div className="space-y-2">
+    <label htmlFor={id} className="block text-sm font-semibold text-gray-700">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    {isTextArea ? (
+      <textarea
+        id={id}
+        rows={4}
+        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-900 placeholder:text-gray-400"
+        placeholder={placeholder}
+        required={required}
+      ></textarea>
+    ) : (
+      <input
+        id={id}
+        type={type}
+        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-900 placeholder:text-gray-400"
+        placeholder={placeholder}
+        required={required}
+      />
+    )}
+  </div>
+);
+
+const ArrowRight = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+  </svg>
+);
+
 export default function ContactPage() {
+  const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus('submitting');
+    setTimeout(() => setFormStatus('success'), 1500);
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50/50">
+    <main className="min-h-screen bg-white font-sans text-gray-900">
       <Header />
       
-      {/* Hero Section */}
-      <section className="bg-neutral-900 pt-32 pb-48 px-4 shadow-xl text-center relative overflow-hidden">
-         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full -ml-48 -mt-48" />
-         <div className="container mx-auto relative z-10 max-w-4xl">
-            <h1 className="text-6xl font-black text-white italic uppercase tracking-tighter mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700">Contact Bureau.</h1>
-            <p className="text-gray-400 font-bold uppercase tracking-[0.4em] text-xs">Direct Channel for Jaipur Operational Assistance</p>
-         </div>
+      {/* 1. Hero Section */}
+      <section className="relative py-20 lg:py-32 px-4 bg-gray-50 overflow-hidden">
+        {/* Subtle background decoration */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-600/5 -skew-x-12 translate-x-1/4" />
+        
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8 max-w-xl">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider">
+                Support Center
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
+                How can we help <span className="text-blue-600">your home</span> today?
+              </h1>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Whether you need an emergency repair or a routine maintenance check, our expert technicians in Jaipur are ready to assist you.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <button 
+                  onClick={() => document.getElementById('inquiry-form')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                >
+                  Submit Inquiry
+                </button>
+                <a 
+                  href="tel:+918000023359"
+                  className="px-8 py-4 bg-white border border-gray-200 hover:border-blue-600 hover:text-blue-600 text-gray-700 rounded-lg font-bold transition-all active:scale-95 flex items-center"
+                >
+                  <Phone size={18} className="mr-2" />
+                  Call Support
+                </a>
+              </div>
+            </div>
+            <div className="hidden lg:block relative">
+              <div className="absolute inset-0 bg-blue-600/10 blur-[100px] rounded-full scale-75" />
+              <img 
+                src="/expert.png" 
+                alt="Local Pankaj Support" 
+                className="relative z-10 w-full max-w-md mx-auto brightness-95"
+              />
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Main Info Section */}
-      <section className="py-24 px-4 -mt-32 relative z-20">
-         <div className="container mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-               
-               {/* Contact Card 1 */}
-               <div className="bg-white p-12 rounded-[3.5rem] shadow-sm border border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-10 hover:shadow-2xl transition-all duration-500">
-                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center">
-                     <PhoneCall size={32} />
-                  </div>
-                  <div className="space-y-2">
-                     <h3 className="text-2xl font-black italic uppercase tracking-tighter">Support Desk.</h3>
-                     <p className="text-gray-500 text-sm font-medium">Connect with our Jaipur operations desk for immediate assistance.</p>
-                  </div>
-                  <a href="tel:+919876543210" className="block text-2xl font-black italic uppercase tracking-tighter text-blue-600 hover:underline">+91 98765 43210</a>
-               </div>
-
-               {/* Contact Card 2 */}
-               <div className="bg-white p-12 rounded-[3.5rem] shadow-sm border border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-10 delay-100 hover:shadow-2xl transition-all duration-500">
-                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center">
-                     <Mail size={32} />
-                  </div>
-                  <div className="space-y-2">
-                     <h3 className="text-2xl font-black italic uppercase tracking-tighter">Email Bureau.</h3>
-                     <p className="text-gray-500 text-sm font-medium">Send us your strategic inquiries and professional service requisitions.</p>
-                  </div>
-                  <a href="mailto:support@localpankaj.com" className="block text-2xl font-black italic uppercase tracking-tighter text-blue-600 hover:underline">support@localpankaj.com</a>
-               </div>
-
-               {/* Contact Card 3 */}
-               <div className="bg-white p-12 rounded-[3.5rem] shadow-sm border border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-10 delay-200 hover:shadow-2xl transition-all duration-500">
-                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center">
-                     <MapPin size={32} />
-                  </div>
-                  <div className="space-y-2">
-                     <h3 className="text-2xl font-black italic uppercase tracking-tighter">Local Hub.</h3>
-                     <p className="text-gray-500 text-sm font-medium">Our central strategic hub located in the heart of Jaipur, Rajasthan.</p>
-                  </div>
-                  <div className="text-2xl font-black italic uppercase tracking-tighter text-gray-950">Mansarovar, Jaipur-302020</div>
-               </div>
-
-            </div>
-
-            {/* Form Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 py-32 items-center">
-               <div className="space-y-10">
-                  <h2 className="text-5xl font-black text-gray-950 uppercase italic tracking-tighter leading-none">Initialize Strategic Inquiry.</h2>
-                  <p className="text-gray-500 font-medium leading-relaxed text-lg italic">Our coordination desk is on standby for your Jaipur dispatch request. Please fill out the requisition form for priority handling.</p>
-                  
-                  <div className="space-y-6">
-                     <div className="flex items-center space-x-4 border-b border-gray-100 pb-6 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
-                        <Clock size={16} className="text-blue-600" />
-                        <span>OPERATIONAL HOURS: MON - SUN (09:00 AM - 09:00 PM)</span>
-                     </div>
-                     <div className="flex items-center space-x-4 border-b border-gray-100 pb-6 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
-                        <Globe size={16} className="text-blue-600" />
-                        <span>GEOGRAPHICAL RANGE: JAIPUR METROPOLITAN REGION</span>
-                     </div>
-                  </div>
-               </div>
-
-               <div className="bg-neutral-900 p-16 rounded-[4rem] shadow-2xl space-y-10 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 blur-[100px] rounded-full -mr-24 -mt-24 group-hover:bg-blue-600/20 transition-all duration-700" />
-                  
-                  <form className="space-y-8">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">User Identity</label>
-                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white font-bold outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-xs" placeholder="ENTER NAME" />
-                        </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Registry Contact</label>
-                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white font-bold outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-xs" placeholder="+91-0000000000" />
-                        </div>
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Dispatch Address (Jaipur)</label>
-                        <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white font-bold outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-xs" placeholder="LOCALITY, AREA CODE..." />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Service Requisition</label>
-                        <textarea className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white font-bold outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-xs h-32" placeholder="DESCRIBE YOUR TECHNICAL FAULT..."></textarea>
-                     </div>
-                     <button className="w-full flex items-center justify-center space-x-4 bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-2xl shadow-blue-500/10 active:scale-95 group">
-                        <span>Deploy Inquiry</span>
-                        <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                     </button>
-                  </form>
-               </div>
-            </div>
-         </div>
+      {/* 2. Contact Methods Section */}
+      <section className="py-20 px-4 bg-white">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Multiple Ways to Reach Us</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto italic">Choose the most convenient method for your request. Our team monitors all channels hourly.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <ContactCard 
+              icon={Phone}
+              title="Call Support"
+              description="Speak directly with our dispatch team for urgent appliance repairs and home services."
+              link="tel:+918000023359"
+              linkText="+91 80000 23359"
+            />
+            <ContactCard 
+              icon={Mail}
+              title="Email Inquiry"
+              description="For service quotes, partnerships, or detailed technical inquiries, drop us a line."
+              link="mailto:support@localpankaj.com"
+              linkText="support@localpankaj.com"
+            />
+            <ContactCard 
+              icon={MapPin}
+              title="Visit Hub"
+              description="Our local headquarters is located in the heart of Jaipur for physical consultations."
+              link="https://maps.google.com"
+              linkText="Mansarovar, Jaipur"
+            />
+          </div>
+        </div>
       </section>
 
+      {/* 3. Trust / Info Strip (NEW) */}
+      <section className="py-12 bg-gray-50 border-y border-gray-100">
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+            <div className="flex flex-col md:flex-row items-center gap-4 group">
+              <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                <Clock size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Available 7 Days</h4>
+                <p className="text-sm text-gray-500">9:00 AM - 9:00 PM Service</p>
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-4 group">
+              <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                <Zap size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Fast Response</h4>
+                <p className="text-sm text-gray-500">Confirmed booking in 30 mins</p>
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-4 group">
+              <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                <Map size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Jaipur Coverage</h4>
+                <p className="text-sm text-gray-500">All major sectors and colonies</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Inquiry Section (Main Form) */}
+      <section id="inquiry-form" className="py-24 lg:py-32 px-4 bg-white scroll-mt-20">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <div className="space-y-12">
+              <div>
+                <h2 className="text-4xl font-extrabold text-gray-900 mb-6 uppercase italic tracking-tight">Need a professional repair?</h2>
+                <p className="text-gray-600 text-lg leading-relaxed italic">
+                  Complete the form and our technical desk will evaluate your requirement and assign the best-suited specialist for your location.
+                </p>
+              </div>
+
+              <div className="space-y-8">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 text-green-500"><CheckCircle2 size={24} /></div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">Certified Technicians</h4>
+                    <p className="text-gray-500 text-sm">Every engineer is background-verified and expert in their category.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 text-green-500"><CheckCircle2 size={24} /></div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">Authentic Spare Parts</h4>
+                    <p className="text-gray-500 text-sm">We only use genuine components with manufacturer warranty.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 text-green-500"><CheckCircle2 size={24} /></div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">Transparent Pricing</h4>
+                    <p className="text-gray-500 text-sm">No hidden charges. Pay only for the service and parts used.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 lg:p-12 rounded-2xl border border-gray-100 shadow-2xl relative">
+              {formStatus === 'success' ? (
+                <div className="text-center py-12 animate-in zoom-in duration-500">
+                  <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={40} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Request Received!</h3>
+                  <p className="text-gray-600">Our team will call you within 30 minutes to confirm your slot.</p>
+                  <button 
+                    onClick={() => setFormStatus('idle')}
+                    className="mt-8 text-blue-600 font-bold hover:underline"
+                  >
+                    Send another inquiry
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputField 
+                      label="Full Name" 
+                      id="name" 
+                      placeholder="e.g. Rahul Sharma" 
+                      required 
+                    />
+                    <InputField 
+                      label="Phone Number" 
+                      id="phone" 
+                      placeholder="e.g. +91 90000 00000" 
+                      required 
+                      type="tel"
+                    />
+                  </div>
+                  <InputField 
+                    label="Service Address" 
+                    id="address" 
+                    placeholder="Area, Locality, or Landmark in Jaipur" 
+                    required 
+                  />
+                  <InputField 
+                    label="Problem Description" 
+                    id="message" 
+                    placeholder="Please explain the issue (e.g. AC not cooling, Fridge making noise)" 
+                    isTextArea
+                    required
+                  />
+                  <button 
+                    disabled={formStatus === 'submitting'}
+                    className="w-full flex items-center justify-center space-x-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-5 rounded-lg font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                  >
+                    {formStatus === 'submitting' ? (
+                      <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-3" />
+                    ) : (
+                      <Send size={18} />
+                    )}
+                    <span>{formStatus === 'submitting' ? 'Processing...' : 'Send Inquiry Now'}</span>
+                  </button>
+                  <p className="text-center text-[11px] text-gray-400 uppercase tracking-widest font-bold">
+                    By submitting, you agree to our Terms of Service
+                  </p>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Footer */}
       <Footer />
     </main>
   );
