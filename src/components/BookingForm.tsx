@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { ChevronRight, ArrowLeft, Check, Calendar, Clock, MapPin, User, Settings, Phone, Mail, Loader2 } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
 // --- Types ---
 
@@ -226,9 +228,37 @@ export default function BookingForm() {
     if (!validateStep(3)) return;
 
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setIsSuccess(true);
+    try {
+      const payload = {
+        name: formData.fullName,
+        phone: formData.mobile,
+        email: formData.email,
+        address: formData.address,
+        pincode: formData.pincode,
+        city: formData.city,
+        state: formData.state,
+        items: [
+          {
+            name: formData.specificService,
+            category: formData.category,
+            price: 0, // Mock price if not available
+            quantity: 1,
+          }
+        ],
+        totalAmount: 0, // Should be calculated
+        paymentMethod: "PAY_ON_VISIT",
+        orderStatus: "PENDING",
+        source: "ORDER",
+      };
+
+      const { data } = await axios.post("/api/orders", payload);
+      setIsSuccess(true);
+      toast.success("Order confirmed successfully!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Strategic deployment failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

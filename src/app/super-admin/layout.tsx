@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   UserCog,
   Package,
-  Lock
+  Lock,
+  ShoppingBag
 } from "lucide-react";
 import { Inter } from "next/font/google";
 import { signOut, useSession } from "next-auth/react";
@@ -46,14 +47,19 @@ export default function SuperAdminLayout({
   const isLoginPage = pathname === "/super-admin/login";
   if (isLoginPage) return <>{children}</>;
 
-  const navItems = [
+  const userRole = (session?.user as any)?.role || "USER";
+
+  const allNavItems = [
     { name: "Executive Analytics", href: "/super-admin", icon: LayoutDashboard },
     { name: "Leads Pipeline", href: "/super-admin/leads", icon: FileText },
+    { name: "Orders Management", href: "/super-admin/orders", icon: ShoppingBag },
     { name: "Manage Technicians", href: "/super-admin/technicians", icon: UserCog },
     { name: "Website Users", href: "/super-admin/website-users", icon: Users },
     { name: "Services Catalog", href: "/super-admin/services", icon: Settings },
     { name: "Product Inventory", href: "/super-admin/products", icon: Package },
   ];
+
+  const navItems = allNavItems;
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,8 +113,8 @@ export default function SuperAdminLayout({
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <item.icon size={18} className={isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"} />
-                {!isSidebarCollapsed && <span className="text-[13px] font-medium">{item.name}</span>}
+                <item.icon size={22} className={isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"} />
+                {!isSidebarCollapsed && <span className="text-[17px] font-bold">{item.name}</span>}
                 {isSidebarCollapsed && (
                   <div className="absolute left-14 invisible group-hover:visible bg-slate-900 text-white text-[11px] px-2 py-1 rounded whitespace-nowrap z-50 shadow-xl">
                     {item.name}

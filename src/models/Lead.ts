@@ -23,9 +23,11 @@ const LeadSchema = new Schema(
     razorpayPaymentId: { type: String },
     status: {
       type: String,
-      enum: ["UNASSIGNED", "FOLLOWING", "CONVERTED", "COMPLETED"],
-      default: "UNASSIGNED",
+      enum: ["NEW", "CONTACTED", "CONVERTED", "CLOSED"],
+      default: "NEW",
     },
+    source: { type: String, default: "WEBSITE" },
+    notes: { type: String },
     verified: { type: Boolean, default: false },
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
     assignedTechnician: { type: Schema.Types.ObjectId, ref: "Technician" },

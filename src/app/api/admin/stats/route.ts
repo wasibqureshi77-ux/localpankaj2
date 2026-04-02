@@ -1,30 +1,31 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import { Lead } from "@/models/Lead";
-import { Appointment } from "@/models/Appointment";
 import { Technician } from "@/models/Technician";
 import { Product } from "@/models/Product";
+import { Order } from "@/models/Order";
 
 export async function GET() {
   try {
     await connectDB();
 
-    const [leadCount, appointmentCount, techCount, productCount, recentLeads, technicians] = await Promise.all([
-      Lead.countDocuments(),
-      Appointment.countDocuments(),
+    const [leadCount, orderCount, techCount, productCount, recentLeads, technicians, allOrders] = await Promise.all([
+      Lead.countDocuments({ source: { $ne: "ORDER" } }),
+      Order.countDocuments(),
       Technician.countDocuments(),
       Product.countDocuments(),
-      Lead.find().sort({ createdAt: -1 }).limit(5),
-      Technician.find()
+      Lead.find({ source: { $ne: "ORDER" } }).sort({ createdAt: -1 }).limit(5),
+      Technician.find(),
+      Order.find({ paymentStatus: "COMPLETED" })
     ]);
 
-    // Simple delta calculations (mocked or compare with last week)
-    // For now, let's just return actual counts
+    const totalRevenue = allOrders.reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0);
+
     const stats = {
       leads: leadCount,
-      appointments: appointmentCount,
-      conversions: appointmentCount, // Mocked as successful appointments
-      failures: 0, // Mocked
+      appointments: orderCount, 
+      conversions: orderCount, 
+      revenue: totalRevenue,
       recentLeads,
       technicians: technicians.map((t: any) => ({
         name: t.name,

@@ -26,16 +26,16 @@ export const StatCard = ({ label, value, change, trend, icon: Icon }: StatCardPr
         <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
           <Icon size={20} />
         </div>
-        <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+        <div className={`flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-full ${
           trend === "up" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
         }`}>
-          {trend === "up" ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+          {trend === "up" ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
           {change}
         </div>
       </div>
       <div>
-        <h3 className="text-sm font-medium text-slate-500 mb-1">{label}</h3>
-        <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+        <h3 className="text-lg font-bold text-slate-500 mb-2">{label}</h3>
+        <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
       </div>
     </div>
   );
@@ -68,8 +68,8 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
   };
 
   return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold border ${getStatusStyles(status)} uppercase tracking-wider`}>
-      {status}
+    <span className={`inline-flex items-center px-2 py-1 rounded-md text-sm font-black border ${getStatusStyles(status)}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace(/_/g, ' ')}
     </span>
   );
 };

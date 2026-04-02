@@ -12,7 +12,7 @@ const UserSchema = new Schema(
     state: { type: String },
     role: {
       type: String,
-      enum: ["USER", "ADMIN", "MANAGER", "EDITOR"],
+      enum: ["USER", "ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR"],
       default: "USER",
     },
   },

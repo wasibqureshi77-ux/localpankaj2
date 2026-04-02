@@ -69,9 +69,9 @@ export default function SuperAdminLeadsPage() {
 
   const metricStats = [
     { label: "Total Leads", value: data.stats.total, change: "Live", trend: "up" as const, icon: Zap },
-    { label: "Unassigned", value: data.stats.unassigned, change: "Action Needed", trend: "down" as const, icon: Clock },
-    { label: "Converted", value: data.stats.converted, change: "In Progress", trend: "up" as const, icon: PhoneCall },
-    { label: "Completed", value: data.stats.completed, change: "Historical", trend: "up" as const, icon: CheckCircle2 },
+    { label: "New", value: data.leads.filter((l: any) => l.status === "NEW").length, change: "Review Now", trend: "down" as const, icon: Clock },
+    { label: "Contacted", value: data.leads.filter((l: any) => l.status === "CONTACTED").length, change: "Ongoing", trend: "up" as const, icon: PhoneCall },
+    { label: "Converted", value: data.leads.filter((l: any) => l.status === "CONVERTED").length, change: "Success", trend: "up" as const, icon: CheckCircle2 },
   ];
 
   return (
@@ -98,8 +98,8 @@ export default function SuperAdminLeadsPage() {
                 <div className="p-2 bg-slate-50 rounded-lg text-slate-500"><stat.icon size={20}/></div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.change}</span>
              </div>
-             <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-             <h3 className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">{stat.label}</h3>
+             <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+             <h3 className="text-sm font-bold text-slate-500 mt-2 capitalize">{stat.label}</h3>
           </div>
         ))}
       </div>
@@ -135,10 +135,10 @@ export default function SuperAdminLeadsPage() {
             <table className="w-full text-left">
                <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest px-6">Customer Profile</th>
-                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Inquiry Point</th>
-                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Lifecycle</th>
-                     <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Strategy</th>
+                     <th className="px-6 py-4 text-xs font-black text-slate-500 capitalize px-6">Customer Profile</th>
+                     <th className="px-6 py-4 text-xs font-black text-slate-500 capitalize">Inquiry Point</th>
+                     <th className="px-6 py-4 text-xs font-black text-slate-500 capitalize">Lifecycle</th>
+                     <th className="px-6 py-4 text-xs font-black text-slate-500 capitalize">Strategy</th>
                      <th className="px-6 py-3"></th>
                   </tr>
                </thead>
@@ -151,31 +151,31 @@ export default function SuperAdminLeadsPage() {
                           className="hover:bg-slate-50/30 transition-colors cursor-pointer group"
                         >
                            <td className="px-6 py-5">
-                              <div className="flex items-center gap-3">
-                                 <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all">
+                              <div className="flex items-center gap-4">
+                                 <div className="h-12 w-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all text-base">
                                     {lead.name[0]}
                                  </div>
-                                 <div>
-                                    <div className="text-sm font-bold text-slate-900 uppercase tracking-tight">{lead.name}</div>
-                                    <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-wider font-mono flex items-center gap-2">
+                                 <div className="space-y-1">
+                                    <div className="text-lg font-black text-slate-900 tracking-tight">{lead.name.charAt(0).toUpperCase() + lead.name.slice(1).toLowerCase()}</div>
+                                    <div className="text-sm font-bold text-slate-400 tracking-wider font-mono flex items-center gap-2">
                                        {lead.phone}
                                        {lead.paymentMethod === "ONLINE" ? (
-                                          <CreditCard size={12} className={lead.paymentStatus === "COMPLETED" ? "text-emerald-500" : "text-amber-500"} />
+                                          <CreditCard size={14} className={lead.paymentStatus === "COMPLETED" ? "text-emerald-500" : "text-amber-500"} />
                                        ) : (
-                                          <HandCoins size={12} className="text-slate-300" />
+                                          <HandCoins size={14} className="text-slate-300" />
                                        )}
                                     </div>
                                  </div>
                               </div>
                            </td>
                            <td className="px-6 py-5">
-                              <div className="text-xs font-bold text-slate-600 uppercase tracking-widest">{lead.service}</div>
+                              <div className="text-sm font-black text-slate-600">{lead.service.charAt(0).toUpperCase() + lead.service.slice(1).toLowerCase()}</div>
                            </td>
                            <td className="px-6 py-5">
                               <StatusBadge status={lead.status} />
                            </td>
                            <td className="px-6 py-5">
-                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                              <div className="text-sm font-black text-slate-400 whitespace-nowrap">
                                  {new Date(lead.createdAt).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
                               </div>
                            </td>

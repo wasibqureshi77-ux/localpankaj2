@@ -28,10 +28,37 @@ export default function LeadDetailsModal({ lead, onClose, onRefresh }: LeadDetai
   const [assigning, setAssigning] = useState(false);
 
   const statusStyles: any = {
-    UNASSIGNED: "bg-amber-50 text-amber-600 border-amber-100",
-    FOLLOWING: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    NEW: "bg-blue-50 text-blue-600 border-blue-100",
+    CONTACTED: "bg-amber-50 text-amber-600 border-amber-100",
     CONVERTED: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    COMPLETED: "bg-blue-50 text-blue-600 border-blue-100",
+    CLOSED: "bg-slate-50 text-slate-600 border-slate-100",
+  };
+
+  const [notes, setNotes] = useState(lead.notes || "");
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  const handleUpdateNotes = async () => {
+    setSavingNotes(true);
+    try {
+      await axios.patch(`/api/leads/${lead._id}`, { notes });
+      toast.success("Intelligence updated");
+      onRefresh();
+    } catch (err) {
+      toast.error("Strategy update failed");
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await axios.patch(`/api/leads/${lead._id}`, { status: newStatus });
+      toast.success(`Lifecycle updated to ${newStatus}`);
+      onRefresh();
+      onClose();
+    } catch (err) {
+      toast.error("Operation failed");
+    }
   };
 
   const handleStartAssignment = async () => {
@@ -64,20 +91,6 @@ export default function LeadDetailsModal({ lead, onClose, onRefresh }: LeadDetai
       onClose();
     } catch (err) {
       toast.error("Assignment protocols failed");
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const handleMarkCompleted = async () => {
-    setAssigning(true);
-    try {
-      await axios.patch(`/api/leads/${lead._id}`, { status: "COMPLETED" });
-      toast.success("Lead Lifecycle Completed");
-      onRefresh();
-      onClose();
-    } catch (err) {
-      toast.error("Operation failed");
     } finally {
       setAssigning(false);
     }
@@ -224,30 +237,65 @@ export default function LeadDetailsModal({ lead, onClose, onRefresh }: LeadDetai
                   <DataBlock label="Full Address" value={lead.address} />
                 </div>
               </div>
+
+              {/* Strategic Intelligence (Notes) */}
+              <div className="space-y-4">
+                <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] flex items-center">
+                  <MessageSquare size={14} className="mr-2" />
+                  Strategic Intelligence
+                </div>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add operational notes, lead quality observations, or follow-up strategy..."
+                  className="w-full h-32 p-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 placeholder:text-slate-300 transition-all"
+                />
+                <button 
+                  onClick={handleUpdateNotes}
+                  disabled={savingNotes}
+                  className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
+                >
+                  {savingNotes ? <Loader2 size={12} className="animate-spin" /> : <ArrowUpRight size={12} />}
+                  Sync Strategy Notes
+                </button>
+              </div>
             </>
           )}
         </div>
 
-        <div className="p-8 bg-gray-50/50 flex justify-end space-x-6">
+        <div className="p-8 bg-gray-50/50 flex flex-wrap justify-end gap-3 sm:gap-6">
           {!showAssignView && (
             <>
-              <button 
-                onClick={handleMarkCompleted}
-                disabled={assigning}
-                className="px-8 py-4 bg-white border border-indigo-100 text-indigo-600 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-100 transition-all flex items-center space-x-3"
-              >
-                <CheckCircle2 size={14} />
-                <span>Mark as Completed</span>
-              </button>
+              {lead.status === "NEW" && (
+                <button 
+                  onClick={() => handleStatusChange("CONTACTED")}
+                  className="px-6 py-3 bg-white border border-amber-200 text-amber-600 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-50 transition-all flex items-center space-x-2"
+                >
+                  <Phone size={14} />
+                  <span>Mark Contacted</span>
+                </button>
+              )}
               
-              <button 
-                onClick={handleStartAssignment}
-                disabled={assigning}
-                className="px-8 py-4 bg-indigo-950 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-950/20 active:scale-95 transition flex items-center space-x-3"
-              >
-                <UserCheck size={14} />
-                <span>Assigned User</span>
-              </button>
+              {lead.status !== "CLOSED" && (
+                <button 
+                  onClick={() => handleStatusChange("CLOSED")}
+                  className="px-6 py-3 bg-white border border-slate-200 text-slate-400 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center space-x-2"
+                >
+                  <X size={14} />
+                  <span>Close Lead</span>
+                </button>
+              )}
+
+              {lead.status !== "CONVERTED" && (
+                <button 
+                  onClick={handleStartAssignment}
+                  disabled={assigning}
+                  className="px-8 py-4 bg-indigo-950 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-950/20 active:scale-95 transition flex items-center space-x-3"
+                >
+                  <UserCheck size={14} />
+                  <span>Assign Specialist</span>
+                </button>
+              )}
             </>
           )}
         </div>

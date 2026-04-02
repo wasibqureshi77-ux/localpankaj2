@@ -1,56 +1,66 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { X, CheckCircle2, ChevronRight, ArrowLeft, Mail, Phone, User, Settings, MapPin, Calendar, Clock, Loader2 } from "lucide-react";
+import { X, CheckCircle2, ChevronRight, ArrowLeft, Loader2, Star, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-// --- Minimal UI Components (Internal to Popup) ---
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
-const PopupLabel = ({ children, required, className = "" }: { children: React.ReactNode; required?: boolean; className?: string }) => (
-  <label className={`block text-[15px] font-bold text-zinc-900 mb-2 leading-none ${className}`}>
+// --- Modern UI Components ---
+
+const Label = ({ children, required, className }: { children: React.ReactNode; required?: boolean; className?: string }) => (
+  <label className={cn("block text-sm font-medium text-zinc-700 mb-1.5", className)}>
     {children}
-    {required && <span className="text-red-500 ml-1 font-black">*</span>}
+    {required && <span className="text-red-500 ml-0.5">*</span>}
   </label>
 );
 
-const PopupInput = ({ error, icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { error?: string; icon?: any }) => (
-  <div className="w-full relative">
-    {Icon && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
-            <Icon size={20} />
-        </div>
-    )}
-    <input
-      className={`w-full ${Icon ? "pl-12" : "px-5"} py-4 bg-white border-2 ${
-        error ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : "border-zinc-200 focus:ring-blue-500/10 focus:border-blue-600"
-      } rounded-xl text-[17px] font-bold text-zinc-900 transition-all outline-none placeholder:text-zinc-400 shadow-sm`}
-      {...props}
-    />
-    {error && <p className="mt-2 text-sm text-red-500 font-extrabold">{error}</p>}
-  </div>
-);
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  error?: string;
+}
 
-const PopupSelect = ({ label, options, value, onChange, error, placeholder, disabled, required, icon: Icon, name }: any) => (
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ error, className, ...props }, ref) => (
+    <div className="w-full">
+      <input
+        ref={ref}
+        className={cn(
+          "w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-lg text-zinc-900 transition-all outline-none placeholder:text-zinc-400",
+          "focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500",
+          error && "border-red-500 focus:ring-red-500/10 focus:border-red-500",
+          className
+        )}
+        {...props}
+      />
+      {error && <p className="mt-1.5 text-xs text-red-500 font-medium">{error}</p>}
+    </div>
+  )
+);
+Input.displayName = "Input";
+
+const Select = ({ label, options, value, onChange, error, placeholder, disabled, required, name }: any) => (
   <div className="w-full">
-    <PopupLabel required={required}>{label}</PopupLabel>
+    <Label required={required}>{label}</Label>
     <div className="relative">
-      {Icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 z-10">
-              <Icon size={20} />
-          </div>
-      )}
       <select
         id={name}
         name={name}
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`w-full ${Icon ? "pl-12" : "px-5"} pr-12 py-4 bg-white border-2 ${
-          error ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : "border-zinc-200 focus:ring-blue-500/10 focus:border-blue-600"
-        } rounded-xl text-[17px] font-bold transition-all outline-none appearance-none cursor-pointer disabled:bg-zinc-50 disabled:cursor-not-allowed ${!value ? "text-zinc-400" : "text-zinc-900"} shadow-sm`}
+        className={cn(
+          "w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-lg text-zinc-900 transition-all outline-none appearance-none cursor-pointer disabled:bg-zinc-50 disabled:cursor-not-allowed shadow-sm",
+          "focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500",
+          !value && "text-zinc-400",
+          error && "border-red-500 focus:ring-red-500/10 focus:border-red-500"
+        )}
       >
         <option value="" disabled>{placeholder || "Select an option"}</option>
         {options.map((opt: any) => (
@@ -59,12 +69,39 @@ const PopupSelect = ({ label, options, value, onChange, error, placeholder, disa
           </option>
         ))}
       </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
-        <ChevronRight size={20} className="rotate-90" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+        <ChevronRight size={16} className="rotate-90" />
       </div>
     </div>
-    {error && <p className="mt-2 text-sm text-red-500 font-extrabold">{error}</p>}
+    {error && <p className="mt-1.5 text-xs text-red-500 font-medium">{error}</p>}
   </div>
+);
+
+const PrimaryButton = ({ children, loading, className, ...props }: any) => (
+  <button
+    disabled={loading}
+    className={cn(
+      "w-full py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2",
+      "hover:bg-blue-700 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-sm",
+      className
+    )}
+    {...props}
+  >
+    {loading ? <Loader2 className="animate-spin" size={18} /> : children}
+  </button>
+);
+
+const SecondaryButton = ({ children, className, ...props }: any) => (
+  <button
+    className={cn(
+      "px-6 py-3 border border-zinc-200 text-zinc-600 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2",
+      "hover:bg-zinc-50 active:scale-[0.98]",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </button>
 );
 
 const LeadPopup = () => {
@@ -93,6 +130,19 @@ const LeadPopup = () => {
     address: "",
   });
 
+  const [categories, setCategories] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [fetchingServices, setFetchingServices] = useState(false);
+
+  // Autofocus first input when step changes
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen && step === 1 && firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+  }, [isOpen, step]);
+
   useEffect(() => {
     if (session?.user) {
       setFormData(prev => ({
@@ -109,13 +159,8 @@ const LeadPopup = () => {
       ...prev,
       bookingDate: new Date().toISOString().split('T')[0]
     }));
-  }, []);
-
-  const [categories, setCategories] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [fetchingServices, setFetchingServices] = useState(false);
-
-  useEffect(() => {
+    
+    // Fetch categories on mount
     const fetchCategories = async () => {
       try {
         const res = await axios.get("/api/services");
@@ -176,6 +221,7 @@ const LeadPopup = () => {
     setTimeout(() => {
         setIsSubmitted(false);
         setStep(1);
+        setErrors({});
     }, 500);
     sessionStorage.setItem("hasSeenPopup", "true");
   };
@@ -185,11 +231,19 @@ const LeadPopup = () => {
     if (step === 1) {
         if (!formData.name) newErrors.name = "Full name is required";
         if (!/^\d{10}$/.test(formData.phone)) newErrors.phone = "Enter 10-digit number";
-        if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Valid email required";
+        if (!formData.email) {
+            newErrors.email = "Email is required";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Enter a valid email address";
+        }
     } else if (step === 2) {
-        if (!formData.serviceType) newErrors.serviceType = "Required";
-        if (!formData.category) newErrors.category = "Required";
-        if (!formData.service) newErrors.service = "Required";
+        if (!formData.serviceType) newErrors.serviceType = "Please select a service type";
+        if (!formData.category) newErrors.category = "Please select a category";
+        if (!formData.service) newErrors.service = "Please select a specific service";
+    } else if (step === 3) {
+        if (!formData.address) newErrors.address = "Address is required";
+        if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = "Enter valid 6-digit pincode";
+        if (!formData.bookingTime) newErrors.bookingTime = "Please select a time slot";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -199,20 +253,23 @@ const LeadPopup = () => {
       if (validate()) setStep(s => s + 1);
   };
 
+  const prevStep = () => {
+      setStep(s => s - 1);
+      setErrors({});
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.address || !formData.pincode || !formData.bookingTime) {
-        toast.error("Please complete all details");
-        return;
-    }
+    if (!validate()) return;
     
     setLoading(true);
     try {
       const payload = {
          ...formData,
-         email: formData.email || session?.user?.email,
-         phone: formData.phone || session?.user?.phone,
-         verified: false 
+         email: formData.email,
+         phone: formData.phone,
+         verified: false,
+         source: "LEAD"
       };
       const res = await axios.post("/api/leads", payload);
       setSubmittedRequestId(res.data.requestId);
@@ -225,303 +282,301 @@ const LeadPopup = () => {
     }
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/70 backdrop-blur-sm">
+        <div 
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-zinc-950/40 backdrop-blur-[2px]"
+          onClick={handleBackdropClick}
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl relative overflow-hidden font-sans border border-white"
+            initial={{ opacity: 0, y: 100, scale: 1 }} // Mobile slide up
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 1 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className={cn(
+              "w-full sm:max-w-[480px] bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl relative overflow-hidden font-sans border-t sm:border border-zinc-100 max-h-[90vh] overflow-y-auto"
+            )}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-                onClick={handleClose}
-                className="absolute right-6 top-6 p-2 bg-zinc-50 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-full transition-all z-30"
-            >
-                <X size={24} strokeWidth={3} />
-            </button>
-
-            {!isSubmitted ? (
-               <div className="flex flex-col">
-                  {/* Step Header */}
-                  <div className="px-12 pt-12 pb-10 bg-white border-b-2 border-zinc-50">
-                     <div className="flex items-center justify-between mb-6">
-                        <span className="text-[14px] font-black uppercase tracking-[0.3em] text-zinc-400">Step {step} of 3</span>
-                        <h3 className="text-xl font-black text-blue-600 uppercase tracking-tight">
-                            {step === 1 ? "User Information" : step === 2 ? "Configure Service" : "Schedule Deployment"}
-                        </h3>
-                     </div>
-                     <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                        <motion.div 
-                            initial={{ width: "33%" }}
-                            animate={{ width: `${(step / 3) * 100}%` }}
-                            className="h-full bg-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.5)]" 
-                        />
-                     </div>
+            {/* Header Area */}
+            <div className="px-6 pt-8 pb-4 sticky top-0 bg-white z-10">
+               <div className="flex justify-between items-start mb-2">
+                  <div className="space-y-1">
+                     <h2 className="text-2xl font-semibold text-zinc-900 tracking-tight">Book a Service</h2>
+                     <p className="text-zinc-500 text-sm">Quick & easy booking in under 30 seconds</p>
                   </div>
-
-                  <form onSubmit={handleSubmit} className="p-12">
-                     <AnimatePresence mode="wait">
-                        {step === 1 && (
-                           <motion.div
-                               key="step1"
-                               initial={{ opacity: 0, x: 20 }}
-                               animate={{ opacity: 1, x: 0 }}
-                               exit={{ opacity: 0, x: -20 }}
-                               className="space-y-8"
-                           >
-                              <div>
-                                 <PopupLabel required>Full Name</PopupLabel>
-                                 <PopupInput
-                                    icon={User}
-                                    placeholder="Enter full name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                    error={errors.name}
-                                    autoFocus
-                                 />
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div>
-                                    <PopupLabel required>Mobile Number</PopupLabel>
-                                    <PopupInput
-                                        icon={Phone}
-                                        type="tel"
-                                        maxLength={10}
-                                        placeholder="10-digit number"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                        error={errors.phone}
-                                    />
-                                </div>
-                                <div>
-                                    <PopupLabel required>Email Address</PopupLabel>
-                                    <PopupInput
-                                        icon={Mail}
-                                        type="email"
-                                        placeholder="john@example.com"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                        error={errors.email}
-                                    />
-                                </div>
-                              </div>
-
-                              <div className="pt-10">
-                                <button
-                                    type="button"
-                                    onClick={nextStep}
-                                    className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[18px] hover:bg-blue-700 shadow-2xl shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-4 uppercase tracking-widest"
-                                >
-                                    Proceed to Next Phase 
-                                    <ChevronRight size={24} strokeWidth={3} />
-                                </button>
-                              </div>
-                           </motion.div>
-                        )}
-
-                        {step === 2 && (
-                           <motion.div
-                               key="step2"
-                               initial={{ opacity: 0, x: 20 }}
-                               animate={{ opacity: 1, x: 0 }}
-                               exit={{ opacity: 0, x: -20 }}
-                               className="space-y-8"
-                           >
-                                <PopupSelect 
-                                    label="Service Type"
-                                    icon={Settings}
-                                    options={serviceTypes}
-                                    value={formData.serviceType}
-                                    onChange={(e: any) => setFormData({...formData, serviceType: e.target.value, category: "", service: ""})}
-                                    error={errors.serviceType}
-                                    placeholder="Select nature of service"
-                                    required
-                                />
-
-                                <PopupSelect 
-                                    label="Category"
-                                    options={categories
-                                        .filter(c => c.category === formData.serviceType)
-                                        .map(cat => ({ label: cat.name, value: cat.name }))
-                                    }
-                                    value={formData.category}
-                                    onChange={(e: any) => setFormData({...formData, category: e.target.value, service: ""})}
-                                    disabled={!formData.serviceType}
-                                    error={errors.category}
-                                    placeholder={formData.serviceType ? "Select Category" : "Select type first"}
-                                    required
-                                />
-
-                                <PopupSelect 
-                                    label="Specific Service Detail"
-                                    options={services.map(svc => ({ label: svc.name, value: svc.name }))}
-                                    value={formData.service}
-                                    onChange={(e: any) => {
-                                        const svc = services.find(s => s.name === e.target.value);
-                                        setFormData({...formData, service: e.target.value, price: svc?.price?.toString() || ""});
-                                    }}
-                                    disabled={!formData.category || fetchingServices}
-                                    error={errors.service}
-                                    placeholder={fetchingServices ? "Syncing..." : "Choose exact service"}
-                                    required
-                                />
-
-                                <div className="flex items-center gap-6 pt-10">
-                                    <button
-                                        type="button"
-                                        onClick={() => setStep(1)}
-                                        className="flex-1 py-5 border-2 border-zinc-100 text-zinc-500 rounded-2xl font-black text-[18px] hover:bg-zinc-50 transition-all flex items-center justify-center gap-3 uppercase"
-                                    >
-                                        <ArrowLeft size={22} strokeWidth={3} /> 
-                                        Back
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={nextStep}
-                                        className="flex-[2] py-5 bg-blue-600 text-white rounded-2xl font-black text-[18px] hover:bg-blue-700 shadow-2xl shadow-blue-600/30 transition-all flex items-center justify-center gap-4 uppercase tracking-widest"
-                                    >
-                                        Proceed
-                                        <ChevronRight size={24} strokeWidth={3} />
-                                    </button>
-                                </div>
-                           </motion.div>
-                        )}
-
-                        {step === 3 && (
-                           <motion.div
-                               key="step3"
-                               initial={{ opacity: 0, x: 20 }}
-                               animate={{ opacity: 1, x: 0 }}
-                               exit={{ opacity: 0, x: -20 }}
-                               className="space-y-8"
-                           >
-                              <div className="space-y-6">
-                                <div>
-                                    <PopupLabel required>Deployment Address</PopupLabel>
-                                    <PopupInput
-                                        icon={MapPin}
-                                        placeholder="Street name, landmark, flat no."
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({...formData, address: e.target.value})}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div>
-                                        <PopupLabel required>PIN Code</PopupLabel>
-                                        <PopupInput
-                                            type="text"
-                                            maxLength={6}
-                                            placeholder="302001"
-                                            value={formData.pincode}
-                                            onChange={(e) => setFormData({...formData, pincode: e.target.value})}
-                                        />
-                                    </div>
-                                    <div>
-                                        <PopupLabel>Service City</PopupLabel>
-                                        <PopupInput
-                                            value="Jaipur"
-                                            readOnly
-                                            disabled
-                                            className="bg-zinc-50 border-zinc-200"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <PopupLabel required>Preferred Date</PopupLabel>
-                                        <PopupInput
-                                            icon={Calendar}
-                                            type="date"
-                                            min={new Date().toISOString().split('T')[0]}
-                                            value={formData.bookingDate}
-                                            onChange={(e) => setFormData({...formData, bookingDate: e.target.value})}
-                                        />
-                                    </div>
-                                    <div>
-                                        <PopupSelect
-                                            label="Time Window"
-                                            icon={Clock}
-                                            placeholder="Pick window"
-                                            value={formData.bookingTime}
-                                            onChange={(e: any) => setFormData({...formData, bookingTime: e.target.value})}
-                                            options={[
-                                                "09:00 AM - 11:00 AM",
-                                                "11:00 AM - 01:00 PM",
-                                                "01:00 PM - 03:00 PM",
-                                                "03:00 PM - 05:00 PM",
-                                                "05:00 PM - 07:00 PM",
-                                                "07:00 PM - 10:00 PM"
-                                            ]}
-                                        />
-                                    </div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-6 pt-10">
-                                 <button
-                                    type="button"
-                                    onClick={() => setStep(2)}
-                                    className="flex-1 py-5 border-2 border-zinc-100 text-zinc-500 rounded-2xl font-black text-[18px] hover:bg-zinc-50 transition-all flex items-center justify-center gap-3 uppercase"
-                                 >
-                                    <ArrowLeft size={22} strokeWidth={3} />
-                                    Back
-                                 </button>
-                                 <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex-[2] py-5 bg-blue-600 text-white rounded-2xl font-black text-[18px] hover:bg-blue-700 shadow-2xl shadow-blue-600/30 transition-all flex items-center justify-center gap-4 disabled:bg-blue-300 uppercase tracking-widest"
-                                 >
-                                    {loading ? <Loader2 className="animate-spin" size={24} /> : (
-                                       <>
-                                          <span>Deploy Now</span>
-                                          <CheckCircle2 size={24} strokeWidth={3} />
-                                       </>
-                                    )}
-                                 </button>
-                              </div>
-                           </motion.div>
-                        )}
-                     </AnimatePresence>
-                  </form>
+                  <button
+                    onClick={handleClose}
+                    className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-full transition-all"
+                    aria-label="Close"
+                  >
+                    <X size={20} />
+                  </button>
                </div>
-            ) : (
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-20 text-center"
-                >
-                    <div className="mx-auto w-24 h-24 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-10 border-2 border-blue-100 shadow-inner">
-                        <CheckCircle2 size={56} strokeWidth={4} />
+               
+               <div className="flex items-center justify-between py-3 border-y border-zinc-50 mt-4">
+                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Step {step} of 3</span>
+                  <div className="flex gap-1.5">
+                     {[1, 2, 3].map((s) => (
+                        <div 
+                           key={s} 
+                           className={cn(
+                              "h-1 w-10 rounded-full transition-all duration-300",
+                              s <= step ? "bg-blue-600" : "bg-zinc-100"
+                           )} 
+                        />
+                     ))}
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-6 pt-2">
+              {!isSubmitted ? (
+                <form onSubmit={(e) => { e.preventDefault(); if (step === 3) handleSubmit(e); else nextStep(); }} className="space-y-6">
+                  <AnimatePresence mode="wait">
+                    {step === 1 && (
+                      <motion.div
+                        key="step1"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="space-y-5"
+                      >
+                        <div>
+                          <Label required>Full Name</Label>
+                          <Input
+                            ref={firstInputRef}
+                            placeholder="e.g. John Doe"
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            error={errors.name}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <Label required>Mobile Number</Label>
+                            <Input
+                              type="tel"
+                              maxLength={10}
+                              placeholder="10-digit number"
+                              value={formData.phone}
+                              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                              error={errors.phone}
+                            />
+                          </div>
+                          <div>
+                            <Label required>Email Address</Label>
+                            <Input
+                              type="email"
+                              placeholder="john@example.com"
+                              value={formData.email}
+                              onChange={(e) => setFormData({...formData, email: e.target.value})}
+                              error={errors.email}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="pt-2">
+                          <PrimaryButton onClick={nextStep} type="button">
+                            Continue
+                            <ChevronRight size={18} />
+                          </PrimaryButton>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 2 && (
+                      <motion.div
+                        key="step2"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="space-y-5"
+                      >
+                        <Select 
+                            label="Service Type"
+                            options={serviceTypes}
+                            value={formData.serviceType}
+                            onChange={(e: any) => setFormData({...formData, serviceType: e.target.value, category: "", service: ""})}
+                            error={errors.serviceType}
+                            placeholder="Select service type"
+                            required
+                        />
+
+                        <Select 
+                            label="Category"
+                            options={categories
+                                .filter(c => c.category === formData.serviceType)
+                                .map(cat => ({ label: cat.name, value: cat.name }))
+                            }
+                            value={formData.category}
+                            onChange={(e: any) => setFormData({...formData, category: e.target.value, service: ""})}
+                            disabled={!formData.serviceType}
+                            error={errors.category}
+                            placeholder={formData.serviceType ? "Select category" : "First select service type"}
+                            required
+                        />
+
+                        <Select 
+                            label="Specific Service"
+                            options={services.map(svc => ({ label: svc.name, value: svc.name }))}
+                            value={formData.service}
+                            onChange={(e: any) => {
+                                const svc = services.find(s => s.name === e.target.value);
+                                setFormData({...formData, service: e.target.value, price: svc?.price?.toString() || ""});
+                            }}
+                            disabled={!formData.category || fetchingServices}
+                            error={errors.service}
+                            placeholder={fetchingServices ? "Loading services..." : "Select exact service"}
+                            required
+                        />
+
+                        <div className="flex gap-3 pt-2">
+                          <SecondaryButton onClick={prevStep} type="button" className="flex-1">
+                            <ArrowLeft size={18} />
+                            Back
+                          </SecondaryButton>
+                          <PrimaryButton onClick={nextStep} type="button" className="flex-[2]">
+                            Continue
+                            <ChevronRight size={18} />
+                          </PrimaryButton>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 3 && (
+                      <motion.div
+                        key="step3"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="space-y-4"
+                      >
+                        <div>
+                          <Label required>Service Address</Label>
+                          <Input
+                            placeholder="House No, Building, Area"
+                            value={formData.address}
+                            onChange={(e) => setFormData({...formData, address: e.target.value})}
+                            error={errors.address}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label required>Pincode</Label>
+                            <Input
+                              maxLength={6}
+                              placeholder="302001"
+                              value={formData.pincode}
+                              onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/\D/g, '')})}
+                              error={errors.pincode}
+                            />
+                          </div>
+                          <div>
+                            <Label>City</Label>
+                            <Input
+                              value="Jaipur"
+                              readOnly
+                              disabled
+                              className="bg-zinc-50 border-zinc-100"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>State</Label>
+                            <Input
+                              value="Rajasthan"
+                              readOnly
+                              disabled
+                              className="bg-zinc-50 border-zinc-100"
+                            />
+                          </div>
+                          <div>
+                            <Label required>Date</Label>
+                            <Input
+                              type="date"
+                              min={new Date().toISOString().split('T')[0]}
+                              value={formData.bookingDate}
+                              onChange={(e) => setFormData({...formData, bookingDate: e.target.value})}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Select
+                            label="Preferred Time Slot"
+                            placeholder="Select time"
+                            value={formData.bookingTime}
+                            onChange={(e: any) => setFormData({...formData, bookingTime: e.target.value})}
+                            error={errors.bookingTime}
+                            required
+                            options={[
+                                "09:00 AM - 11:00 AM",
+                                "11:00 AM - 01:00 PM",
+                                "01:00 PM - 03:00 PM",
+                                "03:00 PM - 05:00 PM",
+                                "05:00 PM - 07:00 PM",
+                                "07:00 PM - 10:00 PM"
+                            ]}
+                          />
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <SecondaryButton onClick={prevStep} type="button" className="flex-1">
+                            Back
+                          </SecondaryButton>
+                          <PrimaryButton type="submit" loading={loading} className="flex-[2]">
+                            Book Now
+                          </PrimaryButton>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  
+                  {/* Trust Badge */}
+                  <div className="pt-2 flex items-center justify-center gap-4 text-zinc-500">
+                    <div className="flex items-center gap-1">
+                       <ShieldCheck size={14} className="text-emerald-500" />
+                       <span className="text-[11px] font-medium">Verified Technicians</span>
                     </div>
-                    <h3 className="text-4xl font-black text-zinc-900 mb-4 tracking-tight uppercase">Booking Confirmed</h3>
-                    <p className="text-zinc-600 mb-12 text-2xl leading-relaxed font-bold">
-                        Request ID: <span className="font-mono font-black bg-blue-50 text-blue-700 px-4 py-1.5 rounded-xl border-2 border-blue-100 tracking-wider">#{submittedRequestId}</span> <br/>
-                        Technician dispatched to your location.
+                    <div className="w-1 h-1 bg-zinc-300 rounded-full" />
+                    <div className="flex items-center gap-1">
+                       <Star size={14} className="text-amber-500 fill-amber-500" />
+                       <span className="text-[11px] font-medium">5000+ Customers</span>
+                    </div>
+                  </div>
+                </form>
+              ) : (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="py-10 text-center"
+                >
+                    <div className="mx-auto w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+                        <CheckCircle2 size={32} />
+                    </div>
+                    <h3 className="text-2xl font-bold text-zinc-900 mb-2">Booking Confirmed!</h3>
+                    <p className="text-zinc-600 mb-8 text-sm leading-relaxed px-4">
+                      We've received your request. Your booking ID is <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">#{submittedRequestId}</span>. 
+                      A technician will contact you shortly.
                     </p>
-                    <button
-                        onClick={handleClose}
-                        className="px-16 py-6 bg-blue-600 text-white rounded-2xl font-black text-2xl hover:bg-blue-700 shadow-2xl shadow-blue-600/40 transition-all active:scale-95 uppercase tracking-widest"
-                    >
-                        Great, thanks!
-                    </button>
+                    <PrimaryButton onClick={handleClose} className="max-w-[200px] mx-auto">
+                      Done
+                    </PrimaryButton>
                 </motion.div>
-            )}
-            
-            {/* Footer trust badge */}
-            {!isSubmitted && (
-                <div className="px-12 py-8 bg-zinc-50 border-t-2 border-zinc-100 flex items-center justify-center">
-                    <p className="text-[13px] text-zinc-400 font-black uppercase tracking-[0.4em] flex items-center gap-4">
-                        <span className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                        Technicians are Online in Jaipur Region
-                    </p>
-                </div>
-            )}
+              )}
+            </div>
           </motion.div>
         </div>
       )}

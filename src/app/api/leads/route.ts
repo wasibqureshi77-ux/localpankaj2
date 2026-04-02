@@ -20,7 +20,7 @@ export async function GET(req: Request) {
        await import("@/models/User");
     }
 
-    let query = {};
+    let query: any = { source: { $ne: "ORDER" } };
     if (email || phone) {
       const orConditions = [];
       if (email) orConditions.push({ email });
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
       }
       
       if (orConditions.length > 0) {
-        query = { $or: orConditions };
+        query = { ...query, $or: orConditions };
       }
     }
 

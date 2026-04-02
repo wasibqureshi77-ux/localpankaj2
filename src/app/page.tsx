@@ -39,7 +39,7 @@ const HomePage = () => {
   }, []);
 
   const slides = [
-    "/image1.png",
+    "/banner1.png",
     "/image2.png",
     "/image3.png"
   ];
