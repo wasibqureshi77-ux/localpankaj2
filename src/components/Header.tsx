@@ -1,18 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Phone, Menu, X, User, ShoppingCart, ChevronRight, ChevronDown } from "lucide-react";
+import { Menu, X, User, ShoppingCart, ChevronRight, ChevronDown } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
-const Header = () => {
+export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0); // This would be controlled by a cart state
+  const [isAccountExpanded, setIsAccountExpanded] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [config, setConfig] = useState<any>(null);
   const { data: session } = useSession();
 
   useEffect(() => {
-    // Check for cart updates
     const updateCartCount = () => {
        const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
        setCartCount(savedCart.length);
@@ -22,7 +22,7 @@ const Header = () => {
     window.addEventListener('storage', updateCartCount);
     
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     
     const fetchConfig = async () => {
@@ -44,136 +44,186 @@ const Header = () => {
   }, []);
 
   return (
-    <header
-      className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-gray-100 ${
-        isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-md py-2"
-          : "bg-white py-4"
-      }`}
-    >
-      <div className="container mx-auto px-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-           {config?.logo ? (
-              <>
-                 <img 
-                   src={config.logo} 
-                   alt="Local Pankaj Logo" 
-                   style={{ height: `${config.logoSizeDesktop || 100}px` }}
-                   className="hidden md:block w-auto object-contain" 
-                 />
-                 <img 
-                   src={config.logo} 
-                   alt="Local Pankaj Logo" 
-                   style={{ height: `${config.logoSizeMobile || 50}px` }}
-                   className="md:hidden w-auto object-contain" 
-                 />
-              </>
-           ) : (
-              <span className="text-2xl font-bold tracking-tighter">
-                LOCAL<span className="text-blue-600">PANKAJ</span>
-              </span>
-           )}
-        </Link>
+    <>
+      <header
+        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
+          isScrolled ? "bg-white/95 backdrop-blur-md border-gray-100 shadow-sm py-3" : "bg-white border-transparent py-5"
+        }`}
+      >
+        <div className="max-w-[1240px] mx-auto px-5 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+             {config?.logo ? (
+                <img 
+                  src={config.logo} 
+                  alt="Local Pankaj" 
+                  className="h-19 sm:h-12 w-auto object-contain transition-transform hover:scale-105" 
+                />
+             ) : (
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900 uppercase">
+                  LOCAL<span className="text-blue-600">PANKAJ</span>
+                </span>
+             )}
+          </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-10 font-black text-[13px] lg:text-[15px] uppercase tracking-widest text-zinc-900">
-          <Link href="/" className="hover:text-blue-500 transition">Home</Link>
-          <Link href="/about" className="hover:text-blue-500 transition">About</Link>
-          
-          <div className="relative group/services py-2">
-            <Link href="/services" className="flex items-center space-x-1 hover:text-blue-500 transition cursor-pointer">
-              <span>Services</span>
-              <ChevronDown size={14} className="group-hover/services:rotate-180 transition-transform duration-300" />
-            </Link>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-10">
+            <DesktopNavLink href="/" label="Home" />
+            <DesktopNavLink href="/about" label="About Us" />
             
-            <div className="absolute left-0 top-full pt-4 opacity-0 invisible group-hover/services:opacity-100 group-hover/services:visible transition-all duration-300">
-               <div className="w-64 bg-white text-gray-950 rounded-3xl shadow-2xl border border-gray-100 p-6 space-y-2">
-                  <Link href="/services?category=APPLIANCE" className="flex items-center justify-between p-4 hover:bg-blue-50 rounded-2xl transition-all group/item">
-                     <span className="font-bold text-[13px] uppercase tracking-wider">Appliance Repair</span>
-                     <ChevronRight size={14} className="text-blue-600 opacity-0 group-hover/item:opacity-100 transform translate-x-[-10px] group-hover/item:translate-x-0 transition-all" />
-                  </Link>
-                  <Link href="/services?category=HOME" className="flex items-center justify-between p-4 hover:bg-blue-50 rounded-2xl transition-all group/item">
-                     <span className="font-bold text-[13px] uppercase tracking-wider">Home Repair</span>
-                     <ChevronRight size={14} className="text-blue-600 opacity-0 group-hover/item:opacity-100 transform translate-x-[-10px] group-hover/item:translate-x-0 transition-all" />
-                  </Link>
-               </div>
-            </div>
-          </div>
-
-          <Link href="/blog" className="hover:text-blue-500 transition">Blog</Link>
-          <Link href="/contact" className="hover:text-blue-500 transition">Contact</Link>
-        </nav>
-
-        <div className="hidden md:flex items-center space-x-4">
-           {/* Cart Button */}
-           <Link href="/cart" className="relative p-2.5 text-gray-400 hover:text-blue-600 transition group">
-              <ShoppingCart size={24} className="text-gray-800" />
-              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-white group-hover:scale-110 transition-transform">
-                 {cartCount}
-              </span>
-           </Link>
-
-          <a
-            href={`tel:${config?.phone || "+919876543210"}`}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
-          >
-            <Phone size={18} />
-            <span>Call Now</span>
-          </a>
-          {session ? (
-            <div className="relative group">
-              <button className="flex items-center space-x-1 outline-none">
-                 <User size={24} className="text-gray-800" />
+            <div className="relative group py-2">
+              <button className="flex items-center space-x-1 text-[13px] font-bold text-gray-600 hover:text-blue-600 transition-colors uppercase tracking-wider">
+                <span>Expert Services</span>
+                <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
               </button>
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <Link href="/dashboard" className="block px-4 py-2 hover:bg-gray-100">Dashboard</Link>
-                {session.user?.role === "ADMIN" && <Link href="/super-admin" className="block px-4 py-2 hover:bg-gray-100">Admin</Link>}
-                <button onClick={() => signOut()} className="block w-full text-left px-4 py-2 hover:bg-gray-100">Logout</button>
+              
+              <div className="absolute left-0 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                 <div className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-2 overflow-hidden">
+                    <Link href="/services?category=APPLIANCE" className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors group/item">
+                       <span className="font-bold text-xs text-gray-700 uppercase tracking-wide">Appliance Repair</span>
+                       <ChevronRight size={12} className="text-blue-600 transform translate-x-1 opacity-0 group-hover/item:opacity-100 transition-all" />
+                    </Link>
+                    <Link href="/services?category=HOME" className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors group/item">
+                       <span className="font-bold text-xs text-gray-700 uppercase tracking-wide">Home Repair</span>
+                       <ChevronRight size={12} className="text-blue-600 transform translate-x-1 opacity-0 group-hover/item:opacity-100 transition-all" />
+                    </Link>
+                 </div>
               </div>
             </div>
-          ) : (
-             <Link href="/login" className="p-2.5 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 transition">
-               <User size={20} />
-             </Link>
-          )}
-        </div>
 
-        {/* Mobile Toggle */}
-         <div className="flex items-center space-x-4 md:hidden">
-           <Link href="/cart" className="relative p-2 text-gray-400">
-              <ShoppingCart size={24} className="text-gray-800" />
-              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-lg">
-                 {cartCount}
-              </span>
-           </Link>
-           <button
-             className="text-gray-800"
-             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            <DesktopNavLink href="/blog" label="Journal" />
+            <DesktopNavLink href="/contact" label="Contact" />
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center space-x-3 sm:space-x-5">
+            {/* Cart Icon */}
+            <Link href="/cart" className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors">
+                <ShoppingCart size={22} strokeWidth={2.5} />
+                <span className="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-bold w-4.5 h-4.5 flex items-center justify-center rounded-full border-2 border-white">
+                   {cartCount}
+                </span>
+            </Link>
+
+            {/* Account & Support (Desktop) */}
+            <div className="hidden lg:flex items-center space-x-6 border-l border-gray-100 pl-6">
+              {session ? (
+                <div className="relative group">
+                  <button className="flex items-center space-x-1 border border-gray-100 p-1.5 rounded-full hover:border-blue-200 transition-colors">
+                     <User size={20} className="text-gray-600" />
+                  </button>
+                  <div className="absolute right-0 top-full mt-3 w-48 bg-white text-gray-700 rounded-xl shadow-2xl py-2 border border-blue-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <Link href="/dashboard" className="block px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 hover:text-blue-700">Dashboard</Link>
+                    {session.user?.role === "ADMIN" && <Link href="/super-admin" className="block px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 hover:text-blue-700">Admin Panel</Link>}
+                    <button onClick={() => signOut()} className="block w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-red-50 hover:text-red-700">Log Out</button>
+                  </div>
+                </div>
+              ) : (
+                 <Link href="/login" className="text-[13px] font-bold text-gray-600 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                   Login
+                 </Link>
+              )}
+              
+              <a
+                href={`tel:${config?.phone || "+919876543210"}`}
+                className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-md shadow-blue-100"
+              >
+                Book Now
+              </a>
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              className="lg:hidden p-2 text-gray-900 active:scale-95 transition-transform"
+              onClick={() => setIsMenuOpen(true)}
+              aria-label="Toggle Menu"
+            >
+              <Menu size={26} strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Drawer Overlay */}
+      <div 
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] lg:hidden transition-opacity duration-300 ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+        onClick={() => setIsMenuOpen(false)}
+      />
+
+      {/* Mobile Drawer Panel */}
+      <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-white z-[70] lg:hidden transform transition-transform duration-300 ease-out shadow-[-10px_0_40px_rgba(0,0,0,0.1)] flex flex-col ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-50">
+           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Navigation Menu</span>
+           <button 
+             onClick={() => setIsMenuOpen(false)}
+             className="p-2 text-gray-500 hover:text-red-500 transition-colors"
            >
-             {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+             <X size={24} />
            </button>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-2xl py-12 px-8 animate-in slide-in-from-top-6 duration-500 rounded-b-[2rem]">
-          <nav className="flex flex-col space-y-8 font-black text-base sm:text-lg uppercase tracking-[0.2em] text-zinc-950">
-             <Link href="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
-             <Link href="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
-             <Link href="/services" onClick={() => setIsMenuOpen(false)}>Expert Services</Link>
-             <Link href="/blog" onClick={() => setIsMenuOpen(false)}>Journal/Blog</Link>
-             <Link href="/contact" onClick={() => setIsMenuOpen(false)}>Contact Desk</Link>
-             <Link href="/login" className="pt-6 border-t border-gray-100 flex items-center justify-between" onClick={() => setIsMenuOpen(false)}>
-                <span>Account Access</span>
-                <ChevronRight size={16} className="text-blue-600" />
-             </Link>
-             <a href={`tel:${config?.phone || "+919876543210"}`} className="bg-blue-600 text-white py-5 rounded-2xl text-center font-black shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Emergency Support</a>
+        <div className="flex-1 overflow-y-auto px-5 py-6">
+          <nav className="flex flex-col space-y-1">
+             <MobileNavLink href="/" label="Home" onClick={() => setIsMenuOpen(false)} />
+             <MobileNavLink href="/about" label="About Us" onClick={() => setIsMenuOpen(false)} />
+             <MobileNavLink href="/services" label="Expert Services" onClick={() => setIsMenuOpen(false)} />
+             <MobileNavLink href="/blog" label="Journal / Blog" onClick={() => setIsMenuOpen(false)} />
+             <MobileNavLink href="/contact" label="Contact Desk" onClick={() => setIsMenuOpen(false)} />
+             
+             <div className="pt-6 mt-4 border-t border-gray-100">
+                <button 
+                  onClick={() => setIsAccountExpanded(!isAccountExpanded)}
+                  className="w-full h-12 flex items-center justify-between group hover:bg-gray-50 rounded-xl px-3 transition-colors"
+                >
+                   <span className="font-bold text-[14px] text-gray-900 uppercase">Account Access</span>
+                   <ChevronDown size={18} className={`text-gray-400 transition-transform ${isAccountExpanded ? "rotate-180" : ""}`} />
+                </button>
+                
+                {isAccountExpanded && (
+                  <div className="pl-4 mt-2 space-y-1">
+                    {session ? (
+                      <>
+                        <Link href="/dashboard" className="flex items-center h-10 px-3 text-sm font-semibold text-gray-600 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                        {session.user?.role === "ADMIN" && <Link href="/super-admin" className="flex items-center h-10 px-3 text-sm font-semibold text-gray-600 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Admin Panel</Link>}
+                        <button onClick={() => { signOut(); setIsMenuOpen(false); }} className="flex items-center h-10 px-3 text-sm font-semibold text-red-600">Log Out</button>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/login" className="flex items-center h-10 px-3 text-sm font-semibold text-gray-600 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Log In</Link>
+                        <Link href="/register" className="flex items-center h-10 px-3 text-sm font-semibold text-gray-600 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Create Account</Link>
+                      </>
+                    )}
+                  </div>
+                )}
+             </div>
           </nav>
         </div>
-      )}
-    </header>
-  );
-};
 
-export default Header;
+        <div className="p-5 border-t border-gray-50">
+           <a 
+            href={`tel:${config?.phone || "+919876543210"}`} 
+            className="w-full h-14 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/10 active:scale-95 transition-all"
+           >
+              Emergency Support
+           </a>
+        </div>
+      </div>
+    </>
+  );
+}
+
+const DesktopNavLink = ({ href, label }: { href: string, label: string }) => (
+  <Link href={href} className="text-[13px] font-bold text-gray-600 hover:text-blue-600 transition-colors uppercase tracking-wider">
+    {label}
+  </Link>
+);
+
+const MobileNavLink = ({ href, label, onClick }: { href: string, label: string, onClick: () => void }) => (
+  <Link 
+    href={href} 
+    onClick={onClick}
+    className="h-12 flex items-center px-3 font-bold text-[14px] text-gray-900 uppercase tracking-tight hover:bg-gray-50 rounded-xl transition-all active:pl-5 group"
+  >
+    {label}
+  </Link>
+);

@@ -1,1 +1,24 @@
-﻿[{"_id":"69c634924712ce2f75988c2a","name":"Editor","email":"editor@gmail.com","phone":"8888888888","password":"$2b$12$oK1OIMHJjRYiyv0ilQYpdOTCwJtlnDgbY//TSDVRsCF6oGm7loWRO","role":"EDITOR","createdAt":"2026-03-27T07:41:06.129Z","updatedAt":"2026-03-27T07:41:06.129Z","__v":0},{"_id":"69c6347f4712ce2f75988c27","name":"admin","email":"admin@gmail.com","phone":"9999999999","password":"$2b$12$RbXai9YeUw.nmdQQ3Lk4qOSbsFA8VQkKxFhZ3SwfcnRWASRe9UJUO","role":"ADMIN","createdAt":"2026-03-27T07:40:47.594Z","updatedAt":"2026-03-27T07:40:47.594Z","__v":0}]
+﻿[
+    {
+        "_id": "69c634924712ce2f75988c2a",
+        "name": "Editor",
+        "email": "editor@gmail.com",
+        "phone": "8888888888",
+        "password": "$2b$12$oK1OIMHJjRYiyv0ilQYpdOTCwJtlnDgbY//TSDVRsCF6oGm7loWRO",
+        "role": "EDITOR",
+        "createdAt": "2026-03-27T07:41:06.129Z",
+        "updatedAt": "2026-03-27T07:41:06.129Z",
+        "__v": 0
+    },
+    {
+        "_id": "69c6347f4712ce2f75988c27",
+        "name": "admin",
+        "email": "admin@gmail.com",
+        "phone": "8000023359",
+        "password": "$2b$12$RbXai9YeUw.nmdQQ3Lk4qOSbsFA8VQkKxFhZ3SwfcnRWASRe9UJUO",
+        "role": "ADMIN",
+        "createdAt": "2026-03-27T07:40:47.594Z",
+        "updatedAt": "2026-03-27T07:40:47.594Z",
+        "__v": 0
+    }
+]

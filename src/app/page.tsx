@@ -98,11 +98,9 @@ const HomePage = () => {
       {/* Hero Section */}
       <section className="relative w-full bg-gray-950 overflow-hidden">
         {/* Slider Background */}
-        <div className={`relative w-full overflow-hidden ${isMobile ? "h-[400px]" : ""}`}>
-          {!isMobile && (
-             /* Spacer for desktop to maintain dynamic aspect ratio */
-             <img src={activeSlides[0]} className="w-full h-auto invisible pointer-events-none" aria-hidden="true" />
-          )}
+        <div className="relative w-full overflow-hidden">
+          {/* Spacer to maintain dynamic aspect ratio */}
+          <img src={activeSlides[0]} className="w-full h-auto invisible pointer-events-none" aria-hidden="true" />
           
           <AnimatePresence initial={false} custom={direction}>
             <motion.img
@@ -116,7 +114,7 @@ const HomePage = () => {
               transition={{
                 x: { type: "tween", duration: 0.8, ease: "easeInOut" }
               }}
-              className={`absolute inset-0 w-full h-full block ${isMobile ? "object-cover object-center" : "object-contain"}`}
+              className="absolute inset-0 w-full h-full block object-cover"
             />
           </AnimatePresence>
           

@@ -13,10 +13,10 @@ export async function sendSms(phone: string, message: string) {
     try {
       const auth = Buffer.from(`${twilioSid}:${twilioAuthToken}`).toString('base64');
       const params = new URLSearchParams();
-      
-      // Twilio requires E.164 format (e.g. +919999999999)
+
+      // Twilio requires E.164 format (e.g. +918000023359)
       const cleanPhone = phone.startsWith('+') ? phone : `+91${phone.replace(/\D/g, "").slice(-10)}`;
-      
+
       params.append('To', cleanPhone);
       params.append('From', twilioFrom);
       params.append('Body', message);
@@ -71,7 +71,7 @@ export async function sendSms(phone: string, message: string) {
 
     const data = await response.json();
     if (data.return !== true) {
-       console.error("Fast2SMS API responded with failure:", data);
+      console.error("Fast2SMS API responded with failure:", data);
     }
     return { success: data.return === true, provider: 'FAST2SMS', data };
   } catch (error) {
