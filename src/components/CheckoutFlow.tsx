@@ -2,52 +2,50 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-  Plus, 
-  MapPin, 
-  Check, 
-  Trash2, 
   User, 
   Phone, 
   Mail, 
+  MapPin, 
   Calendar, 
-  Clock,
-  ChevronRight,
-  ShieldCheck,
-  CreditCard,
+  Clock, 
+  Check, 
+  ChevronRight, 
+  ShieldCheck, 
+  CreditCard, 
   Banknote,
-  Navigation,
-  Edit2,
-  X,
-  Home,
-  Briefcase,
-  ShoppingCart,
-  ChevronLeft,
-  Zap
+  ArrowRight,
+  Zap,
+  Info
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
-// --- Types ---
+import Script from "next/script";
 
-interface Address {
-  id: string;
-  tag: string; // Home, Work, Other
-  details: string;
-  pincode: string;
-  city: string;
-  state: string;
-}
+// --- Sub-components for Clean Structure ---
 
-// --- Components ---
-
-const CheckoutLabel = ({ children, required }: { children: React.ReactNode; required?: boolean }) => (
-  <label className="block text-sm font-bold text-gray-700 mb-2">
-    {children} {required && <span className="text-red-500">*</span>}
-  </label>
+const StepHeader = ({ number, title, active, complete }: any) => (
+  <div className={`flex items-center gap-4 mb-8 transition-all duration-300 ${!active && !complete ? 'opacity-40 grayscale' : 'opacity-100'}`}>
+    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black transition-colors ${complete ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+      {complete ? <Check size={18} strokeWidth={3} /> : number}
+    </div>
+    <h2 className={`text-xl font-black tracking-tight uppercase italic ${active ? 'text-gray-950' : 'text-gray-400'}`}>
+      {title}
+    </h2>
+  </div>
 );
 
-const CheckoutInput = ({ icon: Icon, error, ...props }: any) => (
+const FormLabel = ({ children, required, meta }: any) => (
+  <div className="flex justify-between items-center mb-2">
+    <label className="text-[13px] font-bold text-gray-900">
+      {children} {required && <span className="text-red-500">*</span>}
+    </label>
+    {meta && <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{meta}</span>}
+  </div>
+);
+
+const FormInput = ({ icon: Icon, error, ...props }: any) => (
   <div className="relative group w-full">
     {Icon && (
       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors">
@@ -56,145 +54,190 @@ const CheckoutInput = ({ icon: Icon, error, ...props }: any) => (
     )}
     <input
       {...props}
-      className={`w-full ${Icon ? "pl-12" : "px-4"} py-3.5 bg-white border-2 ${error ? 'border-red-500 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-xl text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-400 shadow-sm`}
+      className={`w-full ${Icon ? "pl-12" : "px-4"} py-4 bg-white border-2 ${error ? 'border-red-500 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl text-sm font-bold text-gray-950 outline-none transition-all placeholder:text-gray-300 shadow-sm`}
     />
-    {error && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{error}</p>}
   </div>
 );
 
-const SectionTitle = ({ number, title, active, complete }: any) => (
-  <div className={`flex items-center gap-4 border-b border-gray-100 pb-4 mb-8 transition-opacity ${!active && !complete ? 'opacity-30' : 'opacity-100'}`}>
-     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${complete ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>
-        {complete ? <Check size={18} strokeWidth={3} /> : number}
-     </span>
-     <h2 className={`text-xl font-extrabold tracking-tight ${active ? 'text-gray-950' : 'text-gray-400'}`}>{title}</h2>
-  </div>
-);
-
-// --- Main Checkout Flow ---
+// --- Main Checkout Component ---
 
 export default function CheckoutFlow({ cartItems = [] }: { cartItems: any[] }) {
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  
-  // Checkout Stages
-  const [currentStep, setCurrentStep] = useState(1); // 1: User Info, 2: Address, 3: Schedule & Pay
-
-  // Form States
-  const [userInfo, setUserInfo] = useState({ name: "", phone: "", email: "" });
-  const [addressForm, setAddressForm] = useState({ tag: "Home", details: "", pincode: "", city: "Jaipur", state: "Rajasthan" });
-  const [schedule, setSchedule] = useState({ date: "", time: "" });
-  const [errors, setErrors] = useState<any>({});
-  
+  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Data States
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    pincode: "",
+    city: "Jaipur",
+    state: "Rajasthan",
+    date: "",
+    time: "",
+    paymentMethod: "ONLINE" // ONLINE or CASH
+  });
+  
+  const [errors, setErrors] = useState<any>({});
 
+  // Persistance & Data Cleanup
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("saved_addresses_v2") || "[]");
     const savedUser = JSON.parse(localStorage.getItem("user_info_check") || "{}");
-    setAddresses(saved);
-    setUserInfo(prev => ({ ...prev, ...savedUser }));
-    
-    if (saved.length > 0) {
-      setSelectedAddressId(saved[0].id);
-    }
+    const savedAddr = JSON.parse(localStorage.getItem("last_used_address") || "{}");
+    setForm(prev => ({ ...prev, ...savedUser, ...savedAddr }));
   }, []);
 
-  // --- Handlers ---
+  const subtotal = cartItems.reduce((acc, item) => acc + item.price, 0);
+  const grandTotal = subtotal;
 
-  const handleUserInfoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Validation Handlers
+  const validateStep1 = () => {
     const newErrors: any = {};
-    if (!userInfo.name.trim()) newErrors.name = "Full name required";
-    if (!/^\d{10}$/.test(userInfo.phone)) newErrors.phone = "Enter 10-digit number";
-    if (!/\S+@\S+\.\S+/.test(userInfo.email)) newErrors.email = "Valid email required";
+    if (!form.name.trim()) newErrors.name = true;
+    if (!/^\d{10}$/.test(form.phone)) newErrors.phone = true;
+    if (!form.address.trim()) newErrors.address = true;
+    if (!/^\d{6}$/.test(form.pincode)) newErrors.pincode = true;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;
+      toast.error("Please fill all required fields correctly.");
+      return false;
     }
     
-    localStorage.setItem("user_info_check", JSON.stringify(userInfo));
+    // Save to local for future convenience
+    localStorage.setItem("user_info_check", JSON.stringify({ name: form.name, phone: form.phone, email: form.email }));
+    localStorage.setItem("last_used_address", JSON.stringify({ address: form.address, pincode: form.pincode }));
+    
     setErrors({});
     setCurrentStep(2);
+    return true;
   };
 
-  const handleSaveAddress = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: any = {};
-    if (!addressForm.details.trim()) newErrors.addr = "Full address required";
-    if (!/^\d{6}$/.test(addressForm.pincode)) newErrors.pincode = "6-digit PIN required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    let updatedAddresses;
-    if (editingAddressId) {
-      updatedAddresses = addresses.map(a => a.id === editingAddressId ? { ...addressForm, id: editingAddressId } : a);
-      setEditingAddressId(null);
-    } else {
-      const newAddr = { ...addressForm, id: Date.now().toString() };
-      updatedAddresses = [...addresses, newAddr];
-      setSelectedAddressId(newAddr.id);
-    }
-
-    localStorage.setItem("saved_addresses_v2", JSON.stringify(updatedAddresses));
-    setAddresses(updatedAddresses);
-    setIsAddingNew(false);
-    setErrors({});
-    toast.success("Address saved");
-  };
-
-  const selectAddress = (id: string) => {
-    setSelectedAddressId(id);
-    setErrors({});
+  const initializeRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   };
 
   const handlePlaceOrder = async () => {
-    // Final Validation
-    if (!schedule.date || !schedule.time) {
-      toast.error("Please select a service slot");
+    if (!form.date || !form.time) {
+      toast.error("Please select your preferred service schedule.");
       return;
     }
 
     setIsSubmitting(true);
+    
     try {
-      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
-      const orderItems = cartItems.map(item => ({
-        name: item.name,
-        category: item.subCategory || "Service",
-        price: item.price,
-        quantity: 1,
-      }));
+      let razorpayOrderId = "";
+      let paymentStatus = "PENDING";
+      let razorpayPaymentId = "";
 
+      // IF ONLINE: Process Razorpay First
+      if (form.paymentMethod === "ONLINE") {
+        const res = await initializeRazorpay();
+        if (!res) {
+          toast.error("Razorpay SDK failed to load. Are you online?");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Create Order on Razorpay Backend
+        const { data: rpOrder } = await axios.post("/api/payment/order", {
+          amount: grandTotal,
+          receipt: `rcpt_${Date.now()}`
+        });
+
+        razorpayOrderId = rpOrder.id;
+
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_5N9d2YlYq8a0p9", 
+          amount: rpOrder.amount,
+          currency: rpOrder.currency,
+          name: "Local Pankaj",
+          description: "Professional Home Service Booking",
+          order_id: rpOrder.id,
+          handler: async function (response: any) {
+            razorpayPaymentId = response.razorpay_payment_id;
+            // Verify payment
+            try {
+              const verifyRes = await axios.post("/api/payment/verify", {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              if (verifyRes.data.success) {
+                paymentStatus = "COMPLETED";
+                // Final Order Placement after verification
+                await finalizeOrder(razorpayOrderId, razorpayPaymentId, "COMPLETED");
+              } else {
+                toast.error("Payment verification failed.");
+                setIsSubmitting(false);
+              }
+            } catch (err) {
+              toast.error("Process interrupted during verification.");
+              setIsSubmitting(false);
+            }
+          },
+          prefill: {
+            name: form.name,
+            email: form.email,
+            contact: form.phone,
+          },
+          theme: {
+             color: "#2b549e",
+          },
+        };
+
+        const paymentObject = new (window as any).Razorpay(options);
+        paymentObject.open();
+        setIsSubmitting(false);
+        return; // Wait for handler
+      }
+
+      // IF CASH: Skip Razorpay
+      await finalizeOrder();
+
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Process failed. Please verify your details.");
+      setIsSubmitting(false);
+    }
+  };
+
+  const finalizeOrder = async (rpOrderId = "", rpPaymentId = "", pStatus = "PENDING") => {
+    try {
       const payload = {
-        name: userInfo.name,
-        phone: userInfo.phone,
-        email: userInfo.email,
-        address: `${selectedAddr?.tag}: ${selectedAddr?.details}`,
-        pincode: selectedAddr?.pincode,
-        city: selectedAddr?.city,
-        state: selectedAddr?.state,
-        items: orderItems,
-        totalAmount: orderItems.reduce((s, i) => s + i.price, 0),
-        date: schedule.date,
-        time: schedule.time,
-        paymentMethod: "PAY_ON_VISIT",
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        address: form.address,
+        pincode: form.pincode,
+        city: form.city,
+        state: form.state,
+        items: cartItems.map(i => ({ name: i.name, price: i.price, quantity: 1 })),
+        totalAmount: grandTotal,
+        date: form.date,
+        time: form.time,
+        paymentMethod: form.paymentMethod === "ONLINE" ? "ONLINE" : "PAY_ON_VISIT",
+        paymentStatus: pStatus,
+        razorpayOrderId: rpOrderId,
+        razorpayPaymentId: rpPaymentId,
         orderStatus: "PENDING",
-        source: "ORDER",
+        source: "WEB_CHECKOUT"
       };
 
       await axios.post("/api/orders", payload);
       setIsSuccess(true);
       localStorage.removeItem("cart");
       window.dispatchEvent(new Event('storage'));
-      toast.success("Deployment Authorized!");
-    } catch (err) {
-      toast.error("Process failed. Please try again.");
+      toast.success("Order Placed Successfully!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Order storage failed.");
     } finally {
       setIsSubmitting(false);
     }
@@ -202,304 +245,266 @@ export default function CheckoutFlow({ cartItems = [] }: { cartItems: any[] }) {
 
   if (isSuccess) {
     return (
-      <div className="py-20 text-center animate-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-           <Check size={48} strokeWidth={4} />
+      <div className="py-24 text-center max-w-lg mx-auto">
+        <div className="w-24 h-24 bg-green-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/20 scale-110 animate-bounce">
+          <Check size={48} strokeWidth={4} />
         </div>
-        <h2 className="text-3xl font-black text-gray-950 mb-4 uppercase italic">Booking Authorized</h2>
-        <p className="text-gray-500 mb-10 max-w-sm mx-auto font-bold leading-relaxed">Your professional dispatch request has been recorded. Expert engineer will arrive at your location as per the schedule.</p>
-        <Link href="/" className="px-12 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-blue-600/20 active:scale-95">Return to Portal</Link>
+        <h2 className="text-4xl font-black text-gray-950 mb-4 uppercase italic tracking-tighter">Request Confirmed.</h2>
+        <p className="text-gray-500 mb-12 font-bold leading-relaxed">Your professional dispatch has been authorized. A technical unit will reach your location as scheduled.</p>
+        <Link href="/" className="inline-flex items-center gap-4 px-12 py-5 bg-blue-600 text-white rounded-2xl font-black uppercase text-sm transition-all hover:bg-blue-700 shadow-xl shadow-blue-600/20 active:scale-95">
+          <span>Return To Portal</span>
+          <ArrowRight size={20} />
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-12 max-w-4xl mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 max-w-7xl mx-auto px-4">
       
-      {/* STEP 1: USER DETAILS */}
-      <section>
-        <SectionTitle number="1" title="User Information" active={currentStep === 1} complete={currentStep > 1} />
+      {/* Left Column: Form Content */}
+      <div className="lg:col-span-8 space-y-8">
         
-        {currentStep === 1 ? (
-          <form onSubmit={handleUserInfoSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white p-2">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <CheckoutLabel required>Full Name</CheckoutLabel>
-                  <CheckoutInput 
-                    icon={User} 
-                    placeholder="e.g. John Smith" 
-                    value={userInfo.name}
-                    error={errors.name}
-                    onChange={(e: any) => setUserInfo({...userInfo, name: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <CheckoutLabel required>Mobile Number</CheckoutLabel>
-                  <CheckoutInput 
-                    icon={Phone} 
-                    placeholder="9XXXXXXXXX" 
-                    maxLength={10}
-                    value={userInfo.phone}
-                    error={errors.phone}
-                    onChange={(e: any) => setUserInfo({...userInfo, phone: e.target.value})}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <CheckoutLabel required>Email ID</CheckoutLabel>
-                  <CheckoutInput 
-                    icon={Mail} 
-                    placeholder="john@example.com" 
-                    type="email"
-                    value={userInfo.email}
-                    error={errors.email}
-                    onChange={(e: any) => setUserInfo({...userInfo, email: e.target.value})}
-                  />
-                </div>
-             </div>
-             <button className="flex items-center gap-3 px-10 py-4 bg-gray-900 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-xl shadow-gray-900/10">
-                <span>Save & Continue</span>
-                <ChevronRight size={16} />
-             </button>
-          </form>
-        ) : (
-          <div className="flex items-center justify-between bg-gray-50/50 px-6 py-4 rounded-xl border border-gray-100 group">
-             <div className="space-y-1">
-                <p className="text-sm font-extrabold text-gray-900">{userInfo.name}</p>
-                <p className="text-xs text-gray-500 font-bold tracking-wider">{userInfo.phone} &bull; {userInfo.email}</p>
-             </div>
-             <button onClick={() => setCurrentStep(1)} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Change</button>
+        {/* STEP 1: SERVICE LOCATION */}
+        <div className={`bg-white border border-gray-100 rounded-[2.5rem] p-8 sm:p-12 transition-all duration-500 shadow-sm ${currentStep !== 1 ? 'opacity-50 pointer-events-none' : 'shadow-xl shadow-gray-200/50'}`}>
+          <StepHeader number="1" title="Service Location" active={currentStep === 1} complete={currentStep > 1} />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="group">
+              <FormLabel required>Full Name</FormLabel>
+              <FormInput 
+                icon={User} 
+                placeholder="Rahul Sharma" 
+                value={form.name}
+                error={errors.name}
+                onChange={(e: any) => setForm({...form, name: e.target.value})}
+              />
+            </div>
+            <div className="group">
+              <FormLabel required>Phone Number</FormLabel>
+              <FormInput 
+                icon={Phone} 
+                placeholder="9XXXXXXXXX" 
+                maxLength={10}
+                value={form.phone}
+                error={errors.phone}
+                onChange={(e: any) => setForm({...form, phone: e.target.value})}
+              />
+            </div>
           </div>
-        )}
-      </section>
 
-      {/* STEP 2: ADDRESS MANAGEMENT */}
-      <section>
-        <SectionTitle number="2" title="Service Location" active={currentStep === 2} complete={currentStep > 2} />
-        
-        {currentStep === 2 && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-             {isAddingNew || addresses.length === 0 ? (
-               <form onSubmit={handleSaveAddress} className="bg-white p-8 rounded-2xl border-2 border-dashed border-gray-100 space-y-8">
-                  <div className="flex items-center justify-between">
-                     <h3 className="text-lg font-bold text-gray-900">{editingAddressId ? 'Edit Address' : 'Add New Location'}</h3>
-                     {addresses.length > 0 && <button type="button" onClick={() => setIsAddingNew(false)}><X className="text-gray-400 hover:text-gray-900" /></button>}
-                  </div>
-                  
-                  <div className="space-y-6">
-                     <div>
-                        <CheckoutLabel required>Address Tag</CheckoutLabel>
-                        <div className="flex gap-4">
-                           {['Home', 'Work', 'Other'].map(tag => (
-                             <button 
-                                key={tag}
-                                type="button"
-                                onClick={() => setAddressForm({...addressForm, tag})}
-                                className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold text-xs flex items-center justify-center gap-2 transition-all ${addressForm.tag === tag ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'}`}
-                             >
-                                {tag === 'Home' ? <Home size={16} /> : tag === 'Work' ? <Briefcase size={16} /> : <MapPin size={16} />}
-                                {tag}
-                             </button>
-                           ))}
-                        </div>
-                     </div>
-                     <div>
-                        <CheckoutLabel required>Full Address (House, Street, Landmark)</CheckoutLabel>
-                        <CheckoutInput 
-                          icon={MapPin} 
-                          placeholder="House No, Street, Nearby Landmark" 
-                          value={addressForm.details}
-                          error={errors.addr}
-                          onChange={(e: any) => setAddressForm({...addressForm, details: e.target.value})}
-                        />
-                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                           <CheckoutLabel required>Pincode</CheckoutLabel>
-                           <CheckoutInput 
-                              placeholder="302001" 
-                              maxLength={6}
-                              value={addressForm.pincode}
-                              error={errors.pincode}
-                              onChange={(e: any) => setAddressForm({...addressForm, pincode: e.target.value})}
-                           />
-                        </div>
-                        <div>
-                           <CheckoutLabel>City</CheckoutLabel>
-                           <CheckoutInput value="Jaipur" readOnly className="cursor-not-allowed opacity-60" />
-                        </div>
-                        <div>
-                           <CheckoutLabel>State</CheckoutLabel>
-                           <CheckoutInput value="Rajasthan" readOnly className="cursor-not-allowed opacity-60" />
-                        </div>
-                     </div>
-                  </div>
-                  
-                  <button className="w-full sm:w-auto px-12 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 active:scale-95">
-                     Save Address & Select
+          <div className="mb-8">
+            <FormLabel meta="(Optional)">Email Address</FormLabel>
+            <FormInput 
+              icon={Mail} 
+              placeholder="john@example.com" 
+              type="email"
+              value={form.email}
+              onChange={(e: any) => setForm({...form, email: e.target.value})}
+            />
+          </div>
+
+          <div className="mb-8">
+            <FormLabel required>Full Address (House, Street, Landmark)</FormLabel>
+            <FormInput 
+              icon={MapPin} 
+              placeholder="Sector 4, Malviya Nagar, Jaipur" 
+              value={form.address}
+              error={errors.address}
+              onChange={(e: any) => setForm({...form, address: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div>
+              <FormLabel required>Pincode</FormLabel>
+              <FormInput 
+                placeholder="302001" 
+                maxLength={6}
+                value={form.pincode}
+                error={errors.pincode}
+                onChange={(e: any) => setForm({...form, pincode: e.target.value})}
+              />
+            </div>
+            <div>
+              <FormLabel>City</FormLabel>
+              <FormInput value="Jaipur" disabled className="bg-gray-50/50" />
+            </div>
+            <div>
+              <FormLabel>State</FormLabel>
+              <FormInput value="Rajasthan" disabled className="bg-gray-50/50" />
+            </div>
+          </div>
+
+          {currentStep === 1 && (
+            <button 
+              onClick={validateStep1}
+              className="w-full sm:w-auto px-12 py-5 bg-gray-950 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all active:scale-[0.98] shadow-2xl shadow-gray-950/10"
+            >
+              Save & Continue
+            </button>
+          )}
+        </div>
+
+        {/* STEP 2: BOOKING SCHEDULE */}
+        <div className={`bg-white border border-gray-100 rounded-[2.5rem] p-8 sm:p-12 transition-all duration-500 shadow-sm ${currentStep < 2 ? 'opacity-30 pointer-events-none' : currentStep === 2 ? 'shadow-xl shadow-gray-200/50' : 'opacity-50'}`}>
+          <StepHeader number="2" title="Booking Schedule" active={currentStep === 2} complete={currentStep > 2} />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div>
+              <FormLabel required>Preferred Date</FormLabel>
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                <input 
+                  type="date"
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-100 focus:border-blue-600 rounded-2xl text-sm font-black outline-none transition-all"
+                  value={form.date}
+                  onChange={(e) => setForm({...form, date: e.target.value})}
+                />
+              </div>
+            </div>
+            <div>
+              <FormLabel required>Time Slot</FormLabel>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {["09-11 AM", "11-01 PM", "01-03 PM", "03-05 PM", "05-07 PM"].map(slot => (
+                  <button 
+                    key={slot}
+                    onClick={() => setForm({...form, time: slot})}
+                    className={`p-3 rounded-xl border-2 font-bold text-[10px] uppercase tracking-widest transition-all ${form.time === slot ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'border-gray-100 bg-white text-gray-500 hover:border-gray-300'}`}
+                  >
+                    {slot}
                   </button>
-               </form>
-             ) : (
-               <div className="space-y-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                     {addresses.map(addr => (
-                        <div 
-                           key={addr.id}
-                           onClick={() => selectAddress(addr.id)}
-                           className={`p-6 rounded-2xl border-2 transition-all cursor-pointer relative group ${selectedAddressId === addr.id ? 'border-blue-600 bg-blue-50/20' : 'border-gray-100 bg-white hover:border-blue-200 shadow-sm'}`}
-                        >
-                           <div className="flex items-start gap-4 mb-4">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${selectedAddressId === addr.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                                 {addr.tag === 'Home' ? <Home size={20} /> : addr.tag === 'Work' ? <Briefcase size={20} /> : <MapPin size={20} />}
-                              </div>
-                              <div className="flex-grow pr-10">
-                                 <h4 className="font-extrabold text-gray-900 flex items-center gap-2">
-                                    {addr.tag}
-                                    {selectedAddressId === addr.id && <Check size={14} className="text-blue-600" strokeWidth={4} />}
-                                 </h4>
-                                 <p className="text-xs text-gray-500 font-bold leading-relaxed pt-1">{addr.details}</p>
-                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">{addr.city}, {addr.pincode}</p>
-                              </div>
-                           </div>
-                           
-                           <div className="flex items-center gap-4 border-t border-gray-100/50 pt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                 onClick={(e) => { e.stopPropagation(); setAddressForm(addr); setEditingAddressId(addr.id); setIsAddingNew(true); }}
-                                 className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
-                              >
-                                 <Edit2 size={12} /> Edit
-                              </button>
-                              <button 
-                                 onClick={(e) => { e.stopPropagation(); const up = addresses.filter(a => a.id !== addr.id); localStorage.setItem("saved_addresses_v2", JSON.stringify(up)); setAddresses(up); }}
-                                 className="flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-widest hover:underline"
-                              >
-                                 <Trash2 size={12} /> Delete
-                              </button>
-                           </div>
-                        </div>
-                     ))}
-                     
-                     <button 
-                        onClick={() => { setAddressForm({ tag: "Home", details: "", pincode: "", city: "Jaipur", state: "Rajasthan" }); setEditingAddressId(null); setIsAddingNew(true); }}
-                        className="p-8 rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-600 hover:bg-blue-50/10 transition-all flex flex-col items-center justify-center gap-3 text-gray-400 hover:text-blue-600 group"
-                     >
-                        <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 group-hover:scale-110 transition-all">
-                           <Plus size={24} />
-                        </div>
-                        <span className="text-xs font-black uppercase tracking-widest">Add New Location</span>
-                     </button>
-                  </div>
-                  
-                  {selectedAddressId && (
-                     <button 
-                        onClick={() => setCurrentStep(3)}
-                        className="px-12 py-5 bg-gray-950 hover:bg-black text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-gray-900/10 active:scale-95 flex items-center gap-3"
-                     >
-                        Confirm Address & Schedule
-                        <ChevronRight size={18} />
-                     </button>
-                  )}
-               </div>
-             )}
+                ))}
+              </div>
+            </div>
           </div>
-        )}
+          
+          {currentStep === 2 && form.date && form.time && (
+             <button 
+                onClick={() => setCurrentStep(3)}
+                className="mt-12 px-12 py-5 bg-gray-950 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all active:scale-[0.98] shadow-2xl shadow-gray-950/10"
+              >
+                Continue To Payment
+              </button>
+          )}
+        </div>
 
-        {currentStep > 2 && (
-          <div className="flex items-center justify-between bg-gray-50/50 px-6 py-4 rounded-xl border border-gray-100 mt-4">
-             <div className="flex items-center gap-4">
-                <MapPin size={20} className="text-blue-600" />
-                <div className="space-y-1">
-                   <p className="text-sm font-extrabold text-gray-900 line-clamp-1">{addresses.find(a => a.id === selectedAddressId)?.details}</p>
-                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{addresses.find(a => a.id === selectedAddressId)?.tag} &bull; जयपुर, राज.</p>
+        {/* STEP 3: PAYMENT AUTHORIZATION */}
+        <div className={`bg-white border border-gray-100 rounded-[2.5rem] p-8 sm:p-12 transition-all duration-500 shadow-sm ${currentStep < 3 ? 'opacity-30 pointer-events-none' : 'shadow-xl shadow-gray-200/50'}`}>
+          <StepHeader number="3" title="Payment Authorization" active={currentStep === 3} />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <button 
+              onClick={() => setForm({...form, paymentMethod: "ONLINE"})}
+              className={`text-left p-8 rounded-[2rem] border-2 transition-all group relative overflow-hidden ${form.paymentMethod === "ONLINE" ? "border-blue-600 bg-blue-50/20" : "border-gray-100 hover:border-blue-200"}`}
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${form.paymentMethod === "ONLINE" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600"}`}>
+                  <CreditCard size={28} />
                 </div>
-             </div>
-             <button onClick={() => setCurrentStep(2)} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Change</button>
+                {form.paymentMethod === "ONLINE" && <Check className="text-blue-600" size={24} strokeWidth={4} />}
+              </div>
+              <h4 className="text-lg font-black text-gray-950 mb-1">Pay Online</h4>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CARDS, UPI, NETBANKING</p>
+            </button>
+
+            <button 
+              onClick={() => setForm({...form, paymentMethod: "CASH"})}
+              className={`text-left p-8 rounded-[2rem] border-2 transition-all group relative overflow-hidden ${form.paymentMethod === "CASH" ? "border-blue-600 bg-blue-50/20" : "border-gray-100 hover:border-blue-200"}`}
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${form.paymentMethod === "CASH" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600"}`}>
+                  <Banknote size={28} />
+                </div>
+                {form.paymentMethod === "CASH" && <Check className="text-blue-600" size={24} strokeWidth={4} />}
+              </div>
+              <h4 className="text-lg font-black text-gray-950 mb-1">Cash on Visit</h4>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pay after service completion</p>
+            </button>
           </div>
-        )}
-      </section>
+        </div>
+      </div>
 
-      {/* STEP 3: SCHEDULING & PAYMENT */}
-      <section>
-        <SectionTitle number="3" title="Booking Schedule" active={currentStep === 3} />
-        
-        {currentStep === 3 && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                   <CheckoutLabel required>Pick a Date</CheckoutLabel>
-                   <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input 
-                        type="date"
-                        min={new Date().toISOString().split("T")[0]}
-                        className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-100 focus:border-blue-600 rounded-2xl text-sm font-black outline-none transition-all"
-                        onChange={(e) => setSchedule({...schedule, date: e.target.value})}
-                      />
-                   </div>
-                </div>
-                <div className="space-y-4">
-                   <CheckoutLabel required>Time Slot</CheckoutLabel>
-                   <div className="flex flex-wrap gap-3">
-                      {["09-11 AM", "11-01 PM", "01-03 PM", "03-05 PM", "05-07 PM"].map(slot => (
-                        <button 
-                          key={slot}
-                          onClick={() => setSchedule({...schedule, time: slot})}
-                          className={`px-4 py-3 rounded-xl border-2 font-bold text-[10px] uppercase tracking-widest transition-all ${schedule.time === slot ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'border-gray-100 bg-white text-gray-500 hover:border-gray-300'}`}
-                        >
-                          {slot}
-                        </button>
-                      ))}
-                   </div>
-                </div>
-             </div>
-
-             <div className="space-y-6 pt-4">
-                <CheckoutLabel>Payment Summary</CheckoutLabel>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 flex items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-blue-600">
-                         <Banknote size={24} />
-                      </div>
-                      <div>
-                         <p className="font-bold text-gray-900">Cash on Visit (COD)</p>
-                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pay after service completion</p>
-                      </div>
-                   </div>
-                   <div className="w-6 h-6 rounded-full border-4 border-blue-600 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                   </div>
-                </div>
-             </div>
-
-             <div className="pt-8 space-y-4">
-                <button 
-                  disabled={isSubmitting}
-                  onClick={handlePlaceOrder}
-                  className="w-full h-20 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-[2rem] font-black text-xl uppercase tracking-tighter italic shadow-2xl shadow-blue-600/40 transition-all active:scale-[0.98] group flex items-center justify-center gap-6"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center gap-4">
-                       <span className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-                       Deploying Experts...
+      {/* Right Column: Recap Sidebar */}
+      <div className="lg:col-span-4">
+        <aside className="sticky top-24 space-y-6">
+          <div className="bg-white border border-gray-100 rounded-[2.5rem] p-10 shadow-2xl shadow-gray-200/50 overflow-hidden relative">
+            {/* Background Accent */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 rounded-bl-[4rem] group-hover:bg-blue-600/10 transition-colors duration-500" />
+            
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-10 border-b border-gray-50 pb-4">Final Recap</h3>
+            
+            <div className="space-y-8 mb-12">
+              {cartItems.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-start gap-4">
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase leading-tight leading-[1.1]">{item.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">1 Unit &bull; expert service</span>
                     </div>
-                  ) : (
-                    <>
-                      Place Delivery Request
-                      <ChevronRight size={24} className="group-hover:translate-x-3 transition-transform duration-500" />
-                    </>
-                  )}
-                </button>
-                <div className="flex items-center justify-center gap-6 opacity-30">
-                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <ShieldCheck size={14} className="text-blue-600" /> Secure
-                   </div>
-                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <Zap size={14} className="text-blue-600" /> Instant
-                   </div>
+                  </div>
+                  <span className="text-sm font-black text-gray-950 whitespace-nowrap">₹{item.price}</span>
                 </div>
-             </div>
+              ))}
+              
+              {cartItems.length === 0 && (
+                <div className="py-8 text-center text-gray-300 font-black uppercase italic tracking-widest bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
+                  Registry Empty
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 border-y border-gray-50 py-8 mb-10">
+              <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                <span>Sub-total</span>
+                <span className="text-gray-900">₹{subtotal}</span>
+              </div>
+              <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                <span>Visiting Charges</span>
+                <span className="text-green-600">EXCLUDED</span>
+              </div>
+            </div>
+
+            <div className="mb-10">
+              <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] italic mb-1 block">Brand Commitment</span>
+              <div className="text-5xl font-black text-gray-950 tracking-tighter italic">₹{grandTotal}</div>
+            </div>
+
+            <button 
+              disabled={isSubmitting || cartItems.length === 0}
+              onClick={currentStep === 3 ? handlePlaceOrder : currentStep === 1 ? validateStep1 : () => setCurrentStep(3)}
+              className="w-full py-5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-2xl font-black uppercase italic tracking-tight text-lg shadow-xl shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-4 group"
+            >
+              {isSubmitting ? "Authorized..." : (
+                <>
+                  <span>Pay ₹{grandTotal}</span>
+                  <ChevronRight size={20} className="group-hover:translate-x-1.5 transition-transform" />
+                </>
+              )}
+            </button>
+
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                <ShieldCheck size={16} className="text-blue-500" />
+                <span>Secure Encryption Active</span>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                <Check size={16} className="text-blue-500" />
+                <span>Certified Service Dispatch</span>
+              </div>
+            </div>
           </div>
-        )}
-      </section>
+          
+          {/* Subtle Help Box */}
+          <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 flex items-start gap-4">
+            <Info size={20} className="text-gray-400 shrink-0" />
+            <p className="text-[11px] font-medium text-gray-500 leading-relaxed">
+              Need assistance? Our helpdesk is available 24/7 for dispatch queries. Call <span className="font-bold text-gray-900">80000 23359</span>.
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

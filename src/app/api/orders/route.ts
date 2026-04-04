@@ -57,6 +57,8 @@ export async function POST(req: Request) {
     const data = await req.json();
     await connectDB();
 
+    console.log("Creating order with data:", JSON.stringify(data, null, 2));
+
     // Generate Order ID
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const orderId = `ORD-${Date.now().toString().slice(-6)}${randomNum}`;
@@ -66,12 +68,19 @@ export async function POST(req: Request) {
       orderId,
     });
 
+    console.log("Order created successfully:", order.orderId);
+
     return NextResponse.json({ 
       success: true, 
       message: "Order placed successfully", 
       order 
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Order creation failed detailing:", {
+      message: error.message,
+      name: error.name,
+      errors: error.errors
+    });
+    return NextResponse.json({ error: error.message, details: error.errors }, { status: 500 });
   }
 }
