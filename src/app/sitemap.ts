@@ -6,7 +6,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Cache for 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://localpankaj.com';
+  // Use production URL always, even if NEXTAUTH_URL is localhost in dev environment
+  const envUrl = process.env.NEXTAUTH_URL || '';
+  const baseUrl = envUrl.includes('localhost') || !envUrl 
+    ? 'https://localpankaj.com' 
+    : envUrl.replace(/\/$/, ""); // Ensure no trailing slash
 
   let dynamicServices: MetadataRoute.Sitemap = [];
   try {
