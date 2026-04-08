@@ -17,7 +17,8 @@ import {
   MoreVertical,
   X,
   Filter,
-  Search
+  Search,
+  Pencil
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -25,12 +26,14 @@ export default function SuperAdminTechniciansPage() {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
+    password: "",
     specialties: [] as string[],
     status: "ACTIVE"
   });
@@ -63,20 +66,49 @@ export default function SuperAdminTechniciansPage() {
     }));
   };
 
+  const openEdit = (tech: any) => {
+    setFormData({
+      name: tech.name,
+      phone: tech.phone,
+      email: tech.email,
+      password: "", // Don't show hashed password, only update if set
+      specialties: tech.specialties || [],
+      status: tech.status
+    });
+    setEditingId(tech._id);
+    setIsAdding(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.specialties.length === 0) {
       toast.error("Please select at least one specialty");
       return;
     }
+
     try {
-      await axios.post("/api/technicians", formData);
-      toast.success("Technician added successfully");
+      if (editingId) {
+         // Clear password if not being updated
+         const payload = { ...formData, id: editingId };
+         if (!payload.password) delete (payload as any).password;
+         
+         await axios.patch("/api/technicians", payload);
+         toast.success("Technician node updated successfully");
+      } else {
+         if (!formData.password) {
+           toast.error("Please set a secure password for technician login");
+           return;
+         }
+         await axios.post("/api/technicians", formData);
+         toast.success("Technician registered with active credentials");
+      }
+      
       setIsAdding(false);
-      setFormData({ name: "", phone: "", email: "", specialties: [], status: "ACTIVE" });
+      setEditingId(null);
+      setFormData({ name: "", phone: "", email: "", password: "", specialties: [], status: "ACTIVE" });
       fetchTechnicians();
     } catch (err) {
-      toast.error("Failed to add technician");
+       toast.error(editingId ? "Failed to update technician" : "Registration failed. Check if email is already in use.");
     }
   };
 
@@ -164,12 +196,20 @@ export default function SuperAdminTechniciansPage() {
                        </div>
                     </div>
                  </div>
-                 <button 
-                    onClick={() => handleDelete(tech._id)}
-                    className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all"
-                 >
-                    <Trash2 size={16} />
-                 </button>
+                 <div className="flex items-center gap-1">
+                    <button 
+                       onClick={() => openEdit(tech)}
+                       className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                    >
+                       <Pencil size={15} />
+                    </button>
+                    <button 
+                       onClick={() => handleDelete(tech._id)}
+                       className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all"
+                    >
+                       <Trash2 size={16} />
+                    </button>
+                 </div>
               </div>
 
               <div className="space-y-4">
@@ -197,11 +237,11 @@ export default function SuperAdminTechniciansPage() {
       {/* Add Modal */}
       {isAdding && (
          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAdding(false)} />
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => { setIsAdding(false); setEditingId(null); }} />
             <div className="relative bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-900">Register Field Unit</h3>
-                  <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
+                  <h3 className="text-base font-bold text-slate-900">{editingId ? "Edit Technician Node" : "Register Field Unit"}</h3>
+                  <button onClick={() => { setIsAdding(false); setEditingId(null); }} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
                </div>
                <form onSubmit={handleSubmit} className="p-6 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
@@ -214,7 +254,7 @@ export default function SuperAdminTechniciansPage() {
                         />
                      </div>
                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Mobile Vector</label>
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Mobile Number</label>
                         <input 
                           required type="text" value={formData.phone}
                           onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -222,13 +262,23 @@ export default function SuperAdminTechniciansPage() {
                         />
                      </div>
                   </div>
-                  <div className="space-y-1.5">
-                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Email Address</label>
-                     <input 
-                       type="email" value={formData.email}
-                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                       className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
-                     />
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Email Node</label>
+                        <input 
+                           required type="email" value={formData.email}
+                           onChange={(e) => setFormData({...formData, email: e.target.value})}
+                           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                     </div>
+                     <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Portal Password</label>
+                        <input 
+                           required type="password" value={formData.password}
+                           onChange={(e) => setFormData({...formData, password: e.target.value})}
+                           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none font-mono"
+                        />
+                     </div>
                   </div>
 
                   <div className="space-y-3">
@@ -251,8 +301,8 @@ export default function SuperAdminTechniciansPage() {
                   </div>
 
                   <div className="pt-4 flex gap-3">
-                     <button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
-                     <button type="submit" className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-100">Initialize Unit</button>
+                     <button type="button" onClick={() => { setIsAdding(false); setEditingId(null); }} className="flex-1 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
+                     <button type="submit" className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-100">{editingId ? "Update Registry" : "Initialize Unit"}</button>
                   </div>
                </form>
             </div>

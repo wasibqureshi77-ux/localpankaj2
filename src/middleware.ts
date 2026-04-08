@@ -38,9 +38,19 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // 4. TECHNICIAN PROTECTION
+  if (pathname.startsWith("/technician") && pathname !== "/technician/login") {
+    if (!token) {
+      return NextResponse.redirect(new URL("/technician/login", req.url));
+    }
+    if (token.role !== "TECHNICIAN") {
+      return NextResponse.redirect(new URL("/technician/login", req.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/super-admin/:path*", "/editor/:path*", "/dashboard/:path*"],
+  matcher: ["/super-admin/:path*", "/editor/:path*", "/dashboard/:path*", "/technician/:path*"],
 };

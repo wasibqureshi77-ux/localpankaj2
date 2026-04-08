@@ -4,11 +4,11 @@ const AppointmentSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     leadId: { type: Schema.Types.ObjectId, ref: "Lead" },
-    technicianId: { type: Schema.Types.ObjectId, ref: "Technician" },
+    technicianId: { type: Schema.Types.ObjectId, ref: "User" },
     date: { type: Date, required: true },
     status: {
       type: String,
-      enum: ["PENDING", "ASSIGNED", "COMPLETED", "CANCELLED"],
+      enum: ["PENDING", "ASSIGNED", "IN_PROGRESS", "PENDING_APPROVAL", "COMPLETED", "CANCELLED"],
       default: "PENDING",
     },
   },

@@ -232,19 +232,17 @@ const CategoryTab = ({ label, count, onClick, active }: any) => (
 );
 
 const InventorySection = ({ id, tag, title, desc, products, onAdd }: any) => (
-  <div id={id} className="scroll-mt-32 space-y-10 transition-all">
-     <div className="space-y-2">
-        <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-[0.4em] block mb-2">{tag}</span>
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{title}</h2>
-        <p className="text-gray-500 font-medium text-sm sm:text-base border-l-2 border-gray-200 pl-4">{desc}</p>
+  <div id={id} className="scroll-mt-32 space-y-6">
+     <div className="space-y-1 px-1">
+        <h2 className="text-4xl font-black text-gray-900 tracking-tighter">{title.split(' ')[1] || title}</h2>
      </div>
      
-     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+     <div className="flex flex-col space-y-4">
         {products.map((p: any) => (
           <ProductCard key={p._id} product={p} onAdd={() => onAdd(p)} />
         ))}
         {products.length === 0 && (
-          <div className="col-span-full py-12 px-8 border border-dashed border-gray-200 rounded-2xl text-center text-gray-400 font-medium text-sm tracking-tight italic">
+          <div className="py-12 px-8 border border-dashed border-gray-200 rounded-2xl text-center text-gray-400 font-medium text-sm">
             Configuring service units in Jaipur...
           </div>
         )}
@@ -253,36 +251,45 @@ const InventorySection = ({ id, tag, title, desc, products, onAdd }: any) => (
 );
 
 const ProductCard = ({ product, onAdd }: any) => (
-  <div className="bg-white border border-gray-100 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:justify-between group hover:border-blue-200 hover:shadow-md transition-all duration-300">
-     <div className="w-full flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 overflow-hidden">
-        <div className="flex-shrink-0 w-full sm:w-24 h-44 sm:h-24 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center p-2 relative group-hover:scale-105 transition-transform">
-           {product.image ? (
-              <Image src={product.image} alt={product.name} fill className="object-cover" />
-           ) : (
-              <div className="text-gray-200"><ShoppingCart size={32} /></div>
-           )}
-        </div>
-        <div className="space-y-1.5 min-w-0 text-center sm:text-left w-full">
-           <h4 className="text-[17px] sm:text-[18px] font-bold text-gray-900 tracking-tight leading-tight uppercase">
+  <div className="bg-white border border-gray-200 rounded-3xl p-3 flex items-start justify-between group transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50">
+     <div className="flex-1 space-y-4 pr-4">
+        <div className="space-y-1">
+           <h4 className="text-[16px] sm:text-[16px] font-bold text-gray-900 tracking-tight leading-tight">
              {product.name}
            </h4>
-           <div className="flex items-center justify-center sm:justify-start space-x-3">
-              <span className="text-xl font-extrabold text-gray-900 tracking-tighter">₹{product.price}</span>
-              {product.price > 500 && <span className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded uppercase">Best Value</span>}
+           <div className="flex text-[16px] items-center space-x-2 text-gray-500 font-medium">
+              <span>Price :</span>
+              <span className="text-gray-900 font-bold">₹{product.price}</span>
            </div>
-           {/* Detailed View Link */}
-           <button className="text-[11px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest flex items-center justify-center sm:justify-start space-x-1.5 transition-colors">
-              <span>View details</span>
-              <ChevronRight size={12} strokeWidth={3} />
-           </button>
         </div>
+        <button className="text-[14px] font-black text-blue-700 hover:text-blue-900 transition-colors decoration-2">
+           View Details
+        </button>
      </div>
-     
-     <button 
-        onClick={onAdd}
-        className="w-full sm:w-auto mt-4 sm:mt-0 flex-shrink-0 px-8 py-4 bg-blue-600 text-white hover:bg-blue-700 font-bold rounded-lg transition-all active:scale-95 shadow-md shadow-blue-100 uppercase tracking-wider text-[13px]"
-     >
-        Add to cart
-     </button>
+
+     <div className="relative flex-shrink-0">
+        <div className="w-28 h-20 sm:w-40 sm:h-28 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group-hover:shadow-lg transition-shadow duration-300">
+           {product.image ? (
+              <Image 
+                src={product.image} 
+                alt={product.name} 
+                fill 
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+              />
+           ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-200 bg-gray-50">
+                <ShoppingCart size={40} />
+              </div>
+           )}
+        </div>
+        
+        {/* Absolute Add Button - Shifted lower for more overlap */}
+        <button 
+           onClick={onAdd}
+           className="absolute -bottom-4 left-1/2 -translate-x-1/2 min-w-[80px] sm:min-w-[100px] py-2 px-4 bg-blue-700 text-white font-black rounded-xl shadow-[0_8px_20px_rgba(29,78,216,0.3)] active:scale-95 transition-all text-sm tracking-tight border-2 border-white z-10"
+        >
+           Add
+        </button>
+     </div>
   </div>
 );

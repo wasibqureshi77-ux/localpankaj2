@@ -10,7 +10,7 @@ interface LoginFormProps {
   title: string;
   subtitle: string;
   redirectTo: string;
-  requiredRole?: "USER" | "ADMIN" | "EDITOR" | "MANAGER";
+  requiredRole?: "USER" | "ADMIN" | "EDITOR" | "MANAGER" | "TECHNICIAN";
 }
 
 function LoadingSpinner() {

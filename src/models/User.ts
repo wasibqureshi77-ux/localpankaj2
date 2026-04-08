@@ -12,12 +12,17 @@ const UserSchema = new Schema(
     state: { type: String },
     role: {
       type: String,
-      enum: ["USER", "ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR"],
+      enum: ["USER", "ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR", "TECHNICIAN"],
       default: "USER",
     },
   },
   { timestamps: true }
 );
+
+// Force model update in development
+if (process.env.NODE_ENV === "development") {
+  delete mongoose.models.User;
+}
 
 const User = models.User || model("User", UserSchema);
 export { User };

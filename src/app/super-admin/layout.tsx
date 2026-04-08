@@ -53,6 +53,7 @@ export default function SuperAdminLayout({
     { name: "Executive Analytics", href: "/super-admin", icon: LayoutDashboard },
     { name: "Leads Pipeline", href: "/super-admin/leads", icon: FileText },
     { name: "Orders Management", href: "/super-admin/orders", icon: ShoppingBag },
+    { name: "Operational Approvals", href: "/super-admin/appointments?filter=PENDING_APPROVAL", icon: ShieldCheck },
     { name: "Manage Technicians", href: "/super-admin/technicians", icon: UserCog },
     { name: "Website Users", href: "/super-admin/website-users", icon: Users },
     { name: "Services Catalog", href: "/super-admin/services", icon: Settings },

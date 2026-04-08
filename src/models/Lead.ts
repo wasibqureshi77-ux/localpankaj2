@@ -30,7 +30,7 @@ const LeadSchema = new Schema(
     notes: { type: String },
     verified: { type: Boolean, default: false },
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
-    assignedTechnician: { type: Schema.Types.ObjectId, ref: "Technician" },
+    assignedTechnician: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

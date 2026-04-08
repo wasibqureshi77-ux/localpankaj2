@@ -67,6 +67,13 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
      </div>
   );
 
+  if (!appointment) return (
+     <div className="h-[70vh] flex flex-col items-center justify-center space-y-4 text-white/50">
+        <ArrowLeft className="cursor-pointer hover:text-white" onClick={() => router.back()} />
+        <p className="text-[10px] font-black uppercase tracking-[0.5em]">Logistical Node Not Found</p>
+     </div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in duration-1000 pb-20">
       <div className="flex items-center space-x-6">
@@ -80,7 +87,7 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
             <div className="flex items-center space-x-3 text-[10px] font-black uppercase tracking-widest text-blue-500 italic opacity-70">
                <span>System</span> <ChevronRight size={10}/> <span>Dispatch Queue</span> <ChevronRight size={10}/> <span className="text-white">Request Detail</span>
             </div>
-            <h1 className="text-3xl font-black text-white uppercase tracking-[0.4em] mt-2">Request {appointment.requestId || "DASHBOARD"}</h1>
+            <h1 className="text-3xl font-black text-white uppercase tracking-[0.4em] mt-2">Request {appointment?.requestId || "DASHBOARD"}</h1>
          </div>
       </div>
 
@@ -177,6 +184,31 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
                      </div>
                   )}
 
+                  {/* Completion Approval Section */}
+                  {appointment.status === "PENDING_APPROVAL" && (
+                     <div className="pt-8 border-t border-white/5 space-y-6 animate-in slide-in-from-top-4">
+                        <div className="flex items-center space-x-3 text-orange-500">
+                           <AlertCircle size={18} />
+                           <p className="text-[10px] font-black uppercase tracking-widest">Technician Flagged for Completion</p>
+                        </div>
+                        <button 
+                           onClick={async () => {
+                              try {
+                                 await axios.patch(`/api/admin/appointments/${appointment._id}`, { status: "COMPLETED" });
+                                 toast.success("Service Record Formalized and Completed");
+                                 fetchData();
+                                 router.push("/super-admin/appointments");
+                              } catch (err) {
+                                 toast.error("Approval sequence failed");
+                              }
+                           }}
+                           className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.5em] hover:bg-emerald-700 transition-all shadow-[0_10px_40px_rgba(16,185,129,0.2)] active:scale-95"
+                        >
+                           Approve Completion
+                        </button>
+                     </div>
+                  )}
+
                   <div className="pt-8 border-t border-white/5 space-y-4">
                      <button className="w-full py-5 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.5em] hover:bg-emerald-500 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center space-x-3">
                         <Truck size={16}/>
@@ -189,6 +221,12 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
       </div>
     </div>
   );
+}
+
+function AlertCircle({ size }: { size: number }) {
+   return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+   );
 }
 
 function DetailItem({ icon, label, value, highlight }: any) {
