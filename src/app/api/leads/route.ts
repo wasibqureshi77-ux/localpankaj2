@@ -20,7 +20,9 @@ export async function GET(req: Request) {
        await import("@/models/User");
     }
 
-    let query: any = { source: { $ne: "ORDER" } };
+    let baseQuery: any = { source: { $ne: "ORDER" } };
+    let orderQuery: any = {};
+
     if (email || phone) {
       const orConditions = [];
       if (email) orConditions.push({ email });
@@ -32,27 +34,64 @@ export async function GET(req: Request) {
       }
       
       if (orConditions.length > 0) {
-        query = { ...query, $or: orConditions };
+        baseQuery = { ...baseQuery, $or: orConditions };
+        orderQuery = { $or: orConditions };
       }
     }
 
-    console.log("Telemetry Search Query:", JSON.stringify(query));
-    console.log("Registered Models:", Object.keys(mongoose.models));
+    console.log("Telemetry Search Query (Leads):", JSON.stringify(baseQuery));
+    console.log("Telemetry Search Query (Orders):", JSON.stringify(orderQuery));
+    
     let leads;
     try {
-      leads = await Lead.find(query).sort({ createdAt: -1 }).populate({
+      const { User } = await import("@/models/User");
+      const { Order } = await import("@/models/Order");
+
+      // Fetch Leads
+      const baseLeads = await Lead.find(baseQuery).sort({ createdAt: -1 }).populate({
         path: "assignedTechnician",
+        model: User,
         strictPopulate: false
       });
+
+      // Fetch Orders
+      const userOrders = await Order.find(orderQuery).sort({ createdAt: -1 });
+
+      // Transform Orders to Unified Lead Format for Dashboard
+      const mappedOrders = userOrders.map((o: any) => ({
+        _id: o._id,
+        name: o.name,
+        email: o.email,
+        phone: o.phone,
+        service: o.items?.[0]?.name || "Professional Service",
+        category: o.items?.[0]?.category || "ORDER",
+        address: o.address,
+        bookingDate: o.date || new Date(o.createdAt).toLocaleDateString(),
+        bookingTime: o.time || "Scheduled",
+        status: o.orderStatus === "PENDING" ? "UNASSIGNED" : o.orderStatus === "CONFIRMED" ? "FOLLOWING" : o.orderStatus === "COMPLETED" ? "COMPLETED" : "UNASSIGNED",
+        paymentMethod: o.paymentMethod,
+        paymentStatus: o.paymentStatus,
+        price: o.totalAmount,
+        requestId: o.orderId,
+        assignedTechnician: o.assignedTechnician || null,
+        createdAt: o.createdAt,
+        isOrderCollection: true
+      }));
+
+      // Merge and Sort
+      leads = [...baseLeads, ...mappedOrders].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
     } catch (popErr: any) {
        console.error("POPULATION_FAILURE:", popErr);
-       leads = await Lead.find(query).sort({ createdAt: -1 }); // Fallback to unpopulated
+       leads = await Lead.find(baseQuery).sort({ createdAt: -1 }); // Fallback
     }    
     // Calculate stats
     const stats = {
       total: leads.length,
       unassigned: leads.filter((l: any) => l.status === "UNASSIGNED").length,
-      converted: leads.filter((l: any) => l.status === "CONVERTED").length,
+      converted: leads.filter((l: any) => l.status === "CONVERTED" || l.status === "FOLLOWING").length,
       completed: leads.filter((l: any) => l.status === "COMPLETED").length,
     };
 

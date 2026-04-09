@@ -20,19 +20,30 @@ export async function POST(req: Request) {
 
     if (generated_signature === razorpay_signature) {
       await connectDB();
-      // Payment is verified
-      await Lead.findByIdAndUpdate(leadId, {
-        paymentStatus: "COMPLETED",
-        razorpayPaymentId: razorpay_payment_id
-      });
+      
+      // If leadId is provided, update the lead (Legacy/Lead flow)
+      if (leadId) {
+        await Lead.findByIdAndUpdate(leadId, {
+          paymentStatus: "COMPLETED",
+          razorpayPaymentId: razorpay_payment_id
+        });
+      }
 
-      return NextResponse.json({ message: "Payment verified successfully" });
-    } else {
-      await connectDB();
-      await Lead.findByIdAndUpdate(leadId, {
-        paymentStatus: "FAILED"
+      return NextResponse.json({ 
+        success: true,
+        message: "Payment verified successfully" 
       });
-      return NextResponse.json({ message: "Invalid signature" }, { status: 400 });
+    } else {
+      if (leadId) {
+        await connectDB();
+        await Lead.findByIdAndUpdate(leadId, {
+          paymentStatus: "FAILED"
+        });
+      }
+      return NextResponse.json({ 
+        success: false,
+        message: "Invalid signature" 
+      }, { status: 400 });
     }
   } catch (error: any) {
     console.error("Verification error:", error);

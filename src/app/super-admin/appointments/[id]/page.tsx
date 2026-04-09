@@ -15,7 +15,8 @@ import {
   Truck,
   Loader2,
   Settings,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -24,18 +25,21 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
   const resolvedParams = use(params);
   const router = useRouter();
   const [appointment, setAppointment] = useState<any>(null);
+  const [appointmentData, setAppointmentData] = useState<any>(null);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [leadRes, techRes] = await Promise.all([
+      const [leadRes, techRes, apptRes] = await Promise.all([
         axios.get(`/api/leads/${resolvedParams.id}`),
-        axios.get("/api/technicians")
+        axios.get("/api/technicians"),
+        axios.get(`/api/appointments?leadId=${resolvedParams.id}`)
       ]);
       setAppointment(leadRes.data);
       setTechnicians(techRes.data);
+      setAppointmentData(apptRes.data);
     } catch (err) {
       toast.error("Failed to fetch details");
     } finally {
@@ -51,7 +55,7 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
     setAssigning(true);
     try {
       await axios.patch(`/api/leads/${resolvedParams.id}`, { assignedTechnician: techId });
-      toast.success("Specialist Assigned Successfully");
+      toast.success("Technician Assigned Successfully");
       fetchData();
     } catch (err) {
       toast.error("Assignment failed");
@@ -60,159 +64,176 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
     }
   };
 
+  const handleStatusUpdate = async (newStatus: string) => {
+    const targetId = appointmentData?._id || appointment?._id;
+    if (!targetId) {
+      toast.error("Process record not found");
+      return;
+    }
+
+    try {
+      await axios.patch(`/api/admin/appointments/${targetId}`, { status: newStatus });
+      toast.success(newStatus === "COMPLETED" ? "Job marked as completed" : `Status updated to ${newStatus}`);
+      fetchData();
+      if (newStatus === "COMPLETED") {
+        router.push("/super-admin/appointments");
+      }
+    } catch (err) {
+      toast.error("Operation failed");
+    }
+  };
+
   if (loading) return (
-     <div className="h-[70vh] flex flex-col items-center justify-center space-y-4 opacity-50">
-        <Loader2 className="animate-spin text-blue-500" size={50} />
-        <p className="text-[10px] font-black uppercase tracking-[0.5em] animate-pulse">Establishing Secure Uplink...</p>
+     <div className="h-[70vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="animate-spin text-blue-600" size={40} />
+        <p className="text-sm font-semibold text-slate-400">Loading appointment details...</p>
      </div>
   );
 
   if (!appointment) return (
-     <div className="h-[70vh] flex flex-col items-center justify-center space-y-4 text-white/50">
-        <ArrowLeft className="cursor-pointer hover:text-white" onClick={() => router.back()} />
-        <p className="text-[10px] font-black uppercase tracking-[0.5em]">Logistical Node Not Found</p>
+     <div className="h-[70vh] flex flex-col items-center justify-center space-y-4 text-slate-400">
+        <ArrowLeft className="cursor-pointer hover:text-slate-900 transition-colors" size={32} onClick={() => router.back()} />
+        <p className="text-sm font-bold uppercase tracking-widest">Appointment Not Found</p>
      </div>
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in duration-1000 pb-20">
-      <div className="flex items-center space-x-6">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
+      <div className="flex items-center gap-6">
          <button 
             onClick={() => router.back()}
-            className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all active:scale-90"
+            className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95"
          >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} className="text-slate-600" />
          </button>
          <div>
-            <div className="flex items-center space-x-3 text-[10px] font-black uppercase tracking-widest text-blue-500 italic opacity-70">
-               <span>System</span> <ChevronRight size={10}/> <span>Dispatch Queue</span> <ChevronRight size={10}/> <span className="text-white">Request Detail</span>
+            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+               <span>Management</span> <ChevronRight size={10}/> <span>Dispatch</span> <ChevronRight size={10}/> <span className="text-blue-600">Request Details</span>
             </div>
-            <h1 className="text-3xl font-black text-white uppercase tracking-[0.4em] mt-2">Request {appointment?.requestId || "DASHBOARD"}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 mt-1">Order {appointment?.requestId || "Detail"}</h1>
          </div>
+         {appointmentData?.status && (
+            <div className={`ml-auto px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-100 bg-slate-50 text-slate-600`}>
+               Status: {appointmentData.status}
+            </div>
+         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          {/* Left: Customer & Service Details */}
-         <div className="lg:col-span-2 space-y-12">
-            <section className="bg-white/5 border border-white/10 p-12 rounded-[3.5rem] backdrop-blur-3xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <User size={120} />
+         <div className="lg:col-span-2 space-y-8">
+            <section className="bg-white border border-slate-200 p-8 sm:p-10 rounded-3xl shadow-sm relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                  <User size={150} />
                </div>
                
-               <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500 mb-10 flex items-center space-x-3">
-                  <div className="w-8 h-[2px] bg-blue-500" />
+               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 mb-8 flex items-center gap-3">
+                  <div className="w-6 h-0.5 bg-blue-600 rounded-full" />
                   <span>Customer Profile</span>
                </h2>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <DetailItem icon={<User />} label="Client Name" value={appointment.name} />
-                  <DetailItem icon={<Phone />} label="Contact Line" value={appointment.phone} />
-                  <DetailItem icon={<Mail />} label="Email Node" value={appointment.email || "N/A"} />
-                  <DetailItem icon={<MapPin />} label="Operational Address" value={appointment.address} />
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                  <DetailItem icon={<User />} label="Customer Name" value={appointment.name} />
+                  <DetailItem icon={<Phone />} label="Phone Number" value={appointment.phone} />
+                  <DetailItem icon={<Mail />} label="Email Address" value={appointment.email || "N/A"} />
+                  <DetailItem icon={<MapPin />} label="Service Address" value={appointment.address} />
                </div>
                
-               <div className="mt-12 pt-12 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <DetailItem icon={<Zap />} label="State" value={appointment.state} />
-                  <DetailItem icon={<Zap />} label="City" value={appointment.city} />
-                  <DetailItem icon={<Zap />} label="Pincode" value={appointment.pincode} />
+               <div className="mt-10 pt-10 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <DetailItem label="State" value={appointment.state} />
+                  <DetailItem label="City" value={appointment.city} />
+                  <DetailItem label="Pincode" value={appointment.pincode} />
                </div>
             </section>
 
-            <section className="bg-white/5 border border-white/10 p-12 rounded-[3.5rem] backdrop-blur-3xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <ShieldCheck size={120} />
+            <section className="bg-white border border-slate-200 p-8 sm:p-10 rounded-3xl shadow-sm relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                  <ShieldCheck size={150} />
                </div>
 
-               <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-emerald-500 mb-10 flex items-center space-x-3">
-                  <div className="w-8 h-[2px] bg-emerald-500" />
-                  <span>Service Parameters</span>
+               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600 mb-8 flex items-center gap-3">
+                  <div className="w-6 h-0.5 bg-emerald-600 rounded-full" />
+                  <span>Service Details</span>
                </h2>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <DetailItem icon={<Settings />} label="Category" value={appointment.category} />
-                  <DetailItem icon={<Zap />} label="Target Service" value={appointment.service} />
+                  <DetailItem icon={<Zap />} label="Service Type" value={appointment.service} />
                   <DetailItem icon={<Calendar />} label="Scheduled Date" value={appointment.bookingDate} />
-                  <DetailItem icon={<Clock />} label="Ops Time" value={appointment.bookingTime} />
-                  <DetailItem icon={<Zap />} label="Service Tier" value={appointment.servicePlan || "Standard"} />
+                  <DetailItem icon={<Clock />} label="Preferred Time" value={appointment.bookingTime} />
+                  <DetailItem icon={<ShieldCheck />} label="Plan Level" value={appointment.servicePlan || "Standard"} />
                   <DetailItem icon={<Zap />} label="Quote Amount" value={`₹${appointment.price}`} highlight />
                </div>
             </section>
          </div>
 
          {/* Right: Dispatch Control */}
-         <div className="space-y-12">
-            <aside className="bg-blue-600/10 border border-blue-600/20 p-12 rounded-[3.5rem] h-fit sticky top-12">
-               <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500 mb-8">Dispatch Center</h2>
+         <div className="space-y-6">
+            <aside className="bg-white border border-slate-200 p-8 rounded-3xl shadow-sm h-fit sticky top-8">
+               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-6">Assignment Center</h2>
                
-               <div className="space-y-8">
-                  <div className="space-y-4">
-                     <label className="text-[9px] font-black text-white/50 uppercase tracking-[0.3em] ml-1">Specialist Assignment</label>
+               <div className="space-y-6">
+                  <div className="space-y-3">
+                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Assign Technician</label>
                      <div className="relative group">
                         <select 
                            disabled={assigning}
-                           className="w-full bg-white text-black rounded-2xl px-6 py-5 text-sm font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                           className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-5 py-3.5 text-sm font-semibold outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none cursor-pointer"
                            onChange={(e) => handleAssign(e.target.value)}
                            value={appointment.assignedTechnician?._id || ""}
                         >
-                           <option value="" className="bg-white">No Selection</option>
+                           <option value="">No technician selected</option>
                            {technicians.map(tech => (
-                              <option key={tech._id} value={tech._id} className="bg-white">
-                                 {tech.name} ({tech.specialties?.join(", ")})
+                              <option key={tech._id} value={tech._id}>
+                                 {tech.name}
                               </option>
                            ))}
                         </select>
-                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-black group-hover:translate-y-[-40%] transition-all">
-                           <ChevronRight size={16} className="rotate-90" />
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                           <ChevronRight size={14} className="rotate-90" />
                         </div>
                      </div>
                   </div>
 
                   {appointment.assignedTechnician ? (
-                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4 animate-in zoom-in-95 duration-500">
+                     <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-3 animate-in zoom-in-95 duration-300">
                         <div className="flex items-center justify-between">
-                           <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">Unit Active</span>
-                           <CheckCircle size={14} className="text-emerald-500" />
+                           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Personnel Assigned</span>
+                           <CheckCircle size={16} className="text-emerald-500" />
                         </div>
                         <div>
-                           <h4 className="text-lg font-black text-white uppercase italic">{appointment.assignedTechnician.name}</h4>
-                           <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-1">{appointment.assignedTechnician.phone}</p>
+                           <h4 className="text-base font-bold text-slate-900">{appointment.assignedTechnician.name}</h4>
+                           <p className="text-xs font-semibold text-emerald-600 mt-0.5">{appointment.assignedTechnician.phone}</p>
                         </div>
                      </div>
                   ) : (
-                     <div className="p-8 border border-dashed border-blue-600/30 rounded-3xl text-center">
-                        <p className="text-[8px] font-black text-blue-600/60 uppercase tracking-[0.3em] italic leading-loose">Waiting for specialist assignment protocols...</p>
+                     <div className="p-6 border-2 border-dashed border-slate-100 rounded-2xl text-center">
+                        <p className="text-[11px] font-semibold text-slate-400">Awaiting technician assignment...</p>
                      </div>
                   )}
 
-                  {/* Completion Approval Section */}
-                  {appointment.status === "PENDING_APPROVAL" && (
-                     <div className="pt-8 border-t border-white/5 space-y-6 animate-in slide-in-from-top-4">
-                        <div className="flex items-center space-x-3 text-orange-500">
-                           <AlertCircle size={18} />
-                           <p className="text-[10px] font-black uppercase tracking-widest">Technician Flagged for Completion</p>
+                  {appointmentData?.status === "PENDING_APPROVAL" && (
+                     <div className="pt-6 border-t border-slate-100 space-y-4">
+                        <div className="flex items-center gap-2 text-orange-600">
+                           <AlertCircle size={16} />
+                           <p className="text-[11px] font-bold uppercase tracking-wider">Approval Required</p>
                         </div>
                         <button 
-                           onClick={async () => {
-                              try {
-                                 await axios.patch(`/api/admin/appointments/${appointment._id}`, { status: "COMPLETED" });
-                                 toast.success("Service Record Formalized and Completed");
-                                 fetchData();
-                                 router.push("/super-admin/appointments");
-                              } catch (err) {
-                                 toast.error("Approval sequence failed");
-                              }
-                           }}
-                           className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.5em] hover:bg-emerald-700 transition-all shadow-[0_10px_40px_rgba(16,185,129,0.2)] active:scale-95"
+                           onClick={() => handleStatusUpdate("COMPLETED")}
+                           className="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-sm active:scale-95"
                         >
-                           Approve Completion
+                           Approve Job
                         </button>
                      </div>
                   )}
 
-                  <div className="pt-8 border-t border-white/5 space-y-4">
-                     <button className="w-full py-5 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.5em] hover:bg-emerald-500 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center space-x-3">
+                  <div className="pt-6 border-t border-slate-100 space-y-3">
+                     <button 
+                        onClick={() => handleStatusUpdate("COMPLETED")}
+                        className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-3"
+                     >
                         <Truck size={16}/>
-                        <span>Confirm Dispatch</span>
+                        <span>complete task </span>
                      </button>
                   </div>
                </div>
@@ -220,24 +241,18 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
          </div>
       </div>
     </div>
-  );
-}
-
-function AlertCircle({ size }: { size: number }) {
-   return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
    );
 }
 
 function DetailItem({ icon, label, value, highlight }: any) {
    return (
-      <div className="space-y-3">
-         <div className="flex items-center space-x-3 text-[9px] font-black text-gray-500 uppercase tracking-[0.3em]">
-            <span className="text-blue-500 opacity-50">{icon && React.cloneElement(icon as any, { size: 12 })}</span>
+      <div className="space-y-2">
+         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            {icon && <span className="text-slate-300">{React.cloneElement(icon as any, { size: 12 })}</span>}
             <span>{label}</span>
          </div>
-         <p className={`text-sm font-bold tracking-tight text-white/90 break-words ${highlight ? "text-xl font-black text-blue-500 tabular-nums italic" : ""}`}>
-            {value}
+         <p className={`text-[15px] font-semibold text-slate-800 break-words leading-snug ${highlight ? "text-2xl font-bold text-blue-600" : ""}`}>
+            {value || "---"}
          </p>
       </div>
    );

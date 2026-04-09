@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import { Order } from "@/models/Order";
 import { Lead } from "@/models/Lead";
+import { User } from "@/models/User";
 import { getServerSession } from "next-auth";
 
 // GET - List all orders (Admin only)
@@ -15,7 +16,11 @@ export async function GET(req: Request) {
     await connectDB();
     
     // 1. Fetch from new Order collection
-    const mainOrders = await Order.find({}).sort({ createdAt: -1 }).populate("user", "name email role shadow:true");
+    const mainOrders = await Order.find({}).sort({ createdAt: -1 }).populate({
+      path: "user",
+      model: User,
+      select: "name email role shadow:true"
+    });
 
     // 2. Fetch legacy checkouts from Lead collection
     const legacyOrders = await Lead.find({ 

@@ -34,6 +34,8 @@ const OrderSchema = new Schema(
     },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
+    date: { type: String },
+    time: { type: String },
     assignedTechnician: {
       name: { type: String },
       phone: { type: String },

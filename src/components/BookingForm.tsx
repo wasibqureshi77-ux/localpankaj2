@@ -173,7 +173,7 @@ export default function BookingForm({ cartItems = [] }: { cartItems?: any[] }) {
     pincode: "",
     state: "Rajasthan",
     city: "Jaipur",
-    date: "",
+    date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0],
     time: "",
   });
 

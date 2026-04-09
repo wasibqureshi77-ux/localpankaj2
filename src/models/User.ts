@@ -15,6 +15,8 @@ const UserSchema = new Schema(
       enum: ["USER", "ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR", "TECHNICIAN"],
       default: "USER",
     },
+    specialties: [{ type: String }],
+    status: { type: String, enum: ["ACTIVE", "BUSY", "OFFLINE"], default: "ACTIVE" },
   },
   { timestamps: true }
 );

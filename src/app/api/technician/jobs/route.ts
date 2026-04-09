@@ -20,7 +20,8 @@ export async function GET() {
     const appointments = await Appointment.find({ technicianId: session.user.id })
       .populate({
         path: "leadId",
-        select: "name phone email service address bookingDate bookingTime category"
+        model: Lead,
+        select: "name phone email service address bookingDate bookingTime category price paymentMethod paymentStatus notes"
       })
       .sort({ createdAt: -1 });
 

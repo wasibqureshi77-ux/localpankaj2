@@ -21,7 +21,7 @@ export default function TechnicianCompletedPage() {
       const { data } = await axios.get("/api/technician/jobs");
       setJobs(data.filter((j: any) => j.status === "COMPLETED"));
     } catch (err) {
-      toast.error("Failed to sync completed registry");
+      toast.error("Telemetry failed");
     } finally {
       setLoading(false);
     }
@@ -33,61 +33,68 @@ export default function TechnicianCompletedPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
+      <div className="space-y-4 animate-pulse">
+        {[1,2,3,4,5].map(i => <div key={i} className="h-16 bg-gray-100 rounded-lg"></div>)}
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-         <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">MISSION <span className="text-emerald-600">ARCHIVE</span></h1>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mt-1">Validated Completion Logs</p>
-         </div>
-         <div className="bg-emerald-50 px-4 py-2 rounded-xl flex items-center space-x-2 text-emerald-600">
-            <CheckCircle2 size={18} />
-            <span className="text-sm font-bold">{jobs.length} Operational Successes</span>
-         </div>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+           <h1 className="text-xl font-bold text-gray-900 tracking-tight">Assignment History</h1>
+           <p className="text-xs text-gray-500 mt-1">Tactical registry of all successfully completed field operations.</p>
+        </div>
       </div>
 
-      {jobs.length === 0 ? (
-         <div className="bg-white border-2 border-dashed border-gray-100 rounded-3xl p-20 text-center space-y-4">
-            <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-gray-300">
-               <CheckCircle2 size={32} />
-            </div>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No completed missions in current cycle</p>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+         <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+               <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                     <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-[35%]">Operation</th>
+                     <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-[25%]">Client Identity</th>
+                     <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-[20%]">Closure Date</th>
+                     <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Status</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-gray-100">
+                  {jobs.length > 0 ? (
+                     jobs.map((job) => (
+                        <tr key={job._id} className="group hover:bg-gray-50/50 transition-all">
+                           <td className="px-6 py-4">
+                              <div className="space-y-0.5">
+                                 <p className="text-sm font-bold text-gray-900">{job.leadId?.service}</p>
+                                 <p className="text-[10px] font-medium text-gray-400 uppercase tracking-tighter line-clamp-1 italic">{job.leadId?.address}</p>
+                              </div>
+                           </td>
+                           <td className="px-6 py-4">
+                              <p className="text-sm font-medium text-gray-800">{job.leadId?.name}</p>
+                              <p className="text-xs text-gray-400 tabular-nums">{job.leadId?.phone}</p>
+                           </td>
+                           <td className="px-6 py-4">
+                              <p className="text-sm text-gray-700 font-medium tabular-nums">{new Date(job.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Validated</p>
+                           </td>
+                           <td className="px-6 py-4 text-right">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                 Completed
+                              </span>
+                           </td>
+                        </tr>
+                     ))
+                  ) : (
+                     <tr>
+                        <td colSpan={4} className="py-24 text-center">
+                           <p className="text-sm text-gray-400 font-medium italic">No historical data available in current archive.</p>
+                        </td>
+                     </tr>
+                  )}
+               </tbody>
+            </table>
          </div>
-      ) : (
-         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {jobs.map((job) => (
-               <div key={job._id} className="bg-white border border-gray-100 p-6 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:shadow-emerald-100/50 transition-all opacity-80 hover:opacity-100">
-                  <div className="flex items-start justify-between mb-6">
-                     <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border bg-emerald-50 text-emerald-600 border-emerald-100">
-                        Finalized
-                     </div>
-                     <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-                        <CheckCircle2 size={18} />
-                     </div>
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-lg font-black text-gray-900">{job.leadId?.serviceName}</h3>
-                     <div className="space-y-2">
-                        <div className="flex items-center space-x-3 text-gray-500 text-xs font-bold uppercase tracking-tight">
-                           <User size={14} />
-                           <span>{job.leadId?.name}</span>
-                        </div>
-                        <div className="flex items-center space-x-3 text-gray-500 text-xs font-bold uppercase tracking-tight">
-                           <Calendar size={14} />
-                           <span>Completed on {new Date(job.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            ))}
-         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import { Appointment } from "@/models/Appointment";
+import { Lead } from "@/models/Lead";
+import { User } from "@/models/User";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const leadId = searchParams.get("leadId");
+
     await connectDB();
-    const appointments = await Appointment.find({})
-      .populate("leadId")
-      .populate("technicianId")
+    
+    const query = leadId ? { leadId } : {};
+    const appointments = await Appointment.find(query)
+      .populate({ path: "leadId", model: Lead })
+      .populate({ path: "technicianId", model: User })
       .sort({ createdAt: -1 });
     
     const formatted = appointments.map((a: any) => ({
@@ -21,7 +28,7 @@ export async function GET() {
       tech: a.technicianId?.name || "Unassigned"
     }));
 
-    return NextResponse.json(formatted);
+    return NextResponse.json(leadId ? formatted[0] : formatted);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

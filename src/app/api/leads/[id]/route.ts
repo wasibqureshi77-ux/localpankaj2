@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import { Lead } from "@/models/Lead";
-import "@/models/User"; // Ensure User model is registered for population
+import { User } from "@/models/User";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -9,7 +9,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     await connectDB();
     
     // We populate assignedTechnician to get the specialist details (name, phone)
-    const lead = await Lead.findById(id).populate("assignedTechnician");
+    const lead = await Lead.findById(id).populate({
+      path: "assignedTechnician",
+      model: User
+    });
 
     if (!lead) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });

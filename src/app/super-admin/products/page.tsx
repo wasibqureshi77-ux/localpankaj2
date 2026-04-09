@@ -231,7 +231,7 @@ export default function SuperAdminProductsPage() {
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={handleCloseModal} />
             <div className="relative bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-                  <h3 className="text-base font-bold text-slate-900">{editId ? 'Modify Strategic Package' : 'Register Service Package'}</h3>
+                  <h3 className="text-base font-bold text-slate-900">{editId ? 'Edit Package' : 'Add New Package'}</h3>
                   <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
                </div>
                
@@ -249,12 +249,12 @@ export default function SuperAdminProductsPage() {
                      </div>
                      <div className="space-y-3">
                         <div>
-                           <h4 className="text-sm font-bold text-slate-900">Visual Package Identity</h4>
-                           <p className="text-[10px] text-slate-500 font-medium leading-relaxed">High resolution asset for public-facing catalog. PNG, JPG or WEBP.</p>
+                           <h4 className="text-sm font-bold text-slate-900">Package Image</h4>
+                           <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Required for the public-facing catalog. PNG, JPG or WEBP.</p>
                         </div>
                         <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 uppercase tracking-widest cursor-pointer hover:bg-slate-50 shadow-sm transition-all active:scale-95">
                            <Camera size={14} />
-                           {formData.image ? 'Replace Asset' : 'Upload Asset'}
+                           {formData.image ? 'Replace Image' : 'Upload Image'}
                            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
                         </label>
                      </div>
@@ -266,8 +266,8 @@ export default function SuperAdminProductsPage() {
                         <input 
                            required value={formData.name}
                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none uppercase font-semibold"
-                           placeholder="E.G. JET PUMP CLEANING"
+                           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none font-semibold"
+                           placeholder="e.g. JET PUMP CLEANING"
                         />
                      </div>
                      <div className="space-y-1.5">
@@ -289,14 +289,14 @@ export default function SuperAdminProductsPage() {
                            onChange={(e) => setFormData({...formData, serviceId: e.target.value})}
                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer font-semibold"
                         >
-                           <option value="">SELECT PARENT UNIT</option>
+                           <option value="">Select Service</option>
                            {services.map(s => (
-                              <option key={s._id} value={s._id}>{s.name.toUpperCase()}</option>
+                              <option key={s._id} value={s._id}>{s.name}</option>
                            ))}
                         </select>
                      </div>
                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><ChevronDown size={12}/> Policy Type</label>
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><ChevronDown size={12}/> Category</label>
                         <select 
                            value={formData.subCategory}
                            onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
@@ -310,19 +310,19 @@ export default function SuperAdminProductsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><FileText size={12}/> Technical Specifications</label>
+                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><FileText size={12}/> Description</label>
                      <textarea 
                         value={formData.description}
                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                         className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none h-24 font-medium"
-                        placeholder="ENTER DETAILED MANIFEST SPECIFICATIONS..."
+                        placeholder="Enter detailed package highlights..."
                      ></textarea>
                   </div>
 
                   <div className="pt-4 flex gap-3 sticky bottom-0 bg-white">
                      <button type="button" onClick={handleCloseModal} className="flex-1 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
                      <button type="submit" disabled={uploading} className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-100 disabled:opacity-50">
-                        {editId ? 'Apply Logical Changes' : 'Publish Asset to Catalog'}
+                        {editId ? 'Save Changes' : 'Add Package'}
                      </button>
                   </div>
                </form>

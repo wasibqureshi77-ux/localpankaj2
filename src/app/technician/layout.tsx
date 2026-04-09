@@ -4,13 +4,12 @@ import Link from "next/link";
 import { 
   LayoutDashboard, 
   Briefcase, 
-  CheckCircle, 
+  CheckSquare, 
   User, 
   LogOut,
   Menu,
-  X
+  Bell
 } from "lucide-react";
-
 import { usePathname } from "next/navigation";
 
 export default function TechnicianLayout({
@@ -26,62 +25,82 @@ export default function TechnicianLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-64 flex-col bg-white border-r border-gray-200">
-        <div className="p-8">
-           <div className="text-2xl font-black tracking-tighter italic text-gray-900">
-              TECH<span className="text-blue-600">PORTAL</span>
+      <aside className="hidden lg:flex w-64 flex-col bg-gray-50 border-r border-gray-200">
+        <div className="h-16 flex items-center px-6 border-b border-gray-200 bg-white">
+           <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                 <div className="w-2 h-2 bg-white rounded-full" />
+              </div>
+              <span className="text-sm font-bold tracking-tight text-gray-900 uppercase">TechPanel</span>
            </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1">
-          <SidebarLink href="/technician" icon={<LayoutDashboard size={20} />} label="Dashboard" />
-          <SidebarLink href="/technician/jobs" icon={<Briefcase size={20} />} label="My Jobs" />
-          <SidebarLink href="/technician/completed" icon={<CheckCircle size={20} />} label="Completed" />
-          <SidebarLink href="/technician/profile" icon={<User size={20} />} label="Profile" />
+        <nav className="flex-1 p-3 space-y-0.5">
+          <SidebarLink href="/technician" current={pathname === "/technician"} icon={<LayoutDashboard size={18} />} label="Overview" />
+          <SidebarLink href="/technician/jobs" current={pathname === "/technician/jobs"} icon={<Briefcase size={18} />} label="My Assignments" />
+          <SidebarLink href="/technician/completed" current={pathname === "/technician/completed"} icon={<CheckSquare size={18} />} label="Completed" />
+          <div className="pt-4 pb-1 px-3">
+             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account</span>
+          </div>
+          <SidebarLink href="/technician/profile" current={pathname === "/technician/profile"} icon={<User size={18} />} label="Profile Settings" />
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-3 border-t border-gray-200">
           <button 
-             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-500 font-bold hover:bg-red-50 hover:text-red-600 transition-colors"
+             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-gray-500 font-medium text-sm hover:bg-red-50 hover:text-red-600 transition-colors"
              onClick={() => {
-                // NextAuth signOut will go here
                 window.location.href = "/api/auth/signout";
              }}
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header */}
-        <header className="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-            <div className="text-xl font-black text-gray-900 italic">TECH<span className="text-blue-600">PORTAL</span></div>
-            <button className="p-2 rounded-lg bg-gray-50 text-gray-600">
-                <Menu size={24} />
-            </button>
+      <div className="flex-1 flex flex-col min-w-0 bg-white">
+        {/* Header */}
+        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-200 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+            <h2 className="text-sm font-bold text-gray-800">
+               {pathname === "/technician" ? "Dashboard" : 
+                pathname === "/technician/jobs" ? "My Assignments" : 
+                pathname === "/technician/completed" ? "History" : "Account"}
+            </h2>
+            <div className="flex items-center gap-4">
+               <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-all">
+                  <Bell size={18} />
+               </button>
+               <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
+                  T
+               </div>
+            </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-           {children}
-        </div>
-      </main>
+        <main className="flex-1 overflow-y-auto bg-gray-50/50">
+           <div className="p-6 lg:p-10 max-w-7xl mx-auto">
+              {children}
+           </div>
+        </main>
+      </div>
     </div>
   );
 }
 
-function SidebarLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+function SidebarLink({ href, icon, label, current }: { href: string; icon: React.ReactNode; label: string; current?: boolean }) {
   return (
     <Link 
       href={href} 
-      className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 font-bold hover:bg-blue-50 hover:text-blue-600 transition-all group"
+      className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium text-sm transition-all ${
+        current 
+        ? "bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100/50" 
+        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+      }`}
     >
-      <span className="opacity-70 group-hover:opacity-100">{icon}</span>
-      <span className="text-sm">{label}</span>
+      <span className={`${current ? "text-indigo-600" : "text-gray-400"}`}>{icon}</span>
+      <span>{label}</span>
     </Link>
   );
 }

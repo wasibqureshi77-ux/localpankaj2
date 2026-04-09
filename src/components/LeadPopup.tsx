@@ -155,9 +155,11 @@ const LeadPopup = () => {
   }, [session]);
 
   useEffect(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
     setFormData(prev => ({
       ...prev,
-      bookingDate: new Date().toISOString().split('T')[0]
+      bookingDate: tomorrow.toISOString().split('T')[0]
     }));
     
     // Fetch categories on mount
