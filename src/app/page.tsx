@@ -50,9 +50,8 @@ const HomePage = () => {
     "/mobile-banner-3.png"
   ];
 
-  const [isMobile, setIsMobile] = useState(false);
-  const [[page, direction], setPage] = useState([0, 0]);
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
+   const [isMobile, setIsMobile] = useState(false);
+   const [[page, direction], setPage] = useState([0, 0]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -352,118 +351,64 @@ const HomePage = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-24 bg-white overflow-hidden">
+      <section className="py-24 bg-white overflow-hidden relative">
+         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
          <div className="container text-center">
             <h2 className="text-4xl sm:text-6xl font-black pb-4 text-gray-950 tracking-tight leading-none">
                What Our Clients <br className="sm:hidden" /> Say About Us
             </h2>
          </div>
          
-         <div className="relative max-w-4xl mx-auto px-4">
-            {isMobile ? (
-              /* Mobile Carousel */
-              <div>
-                <motion.div 
-                   drag="x"
-                   dragConstraints={{ left: 0, right: 0 }}
-                   onDragEnd={(_, info) => {
-                     if (info.offset.x < -50) setTestimonialIndex(prev => Math.min(prev + 1, testimonialsData.length - 1));
-                     if (info.offset.x > 50) setTestimonialIndex(prev => Math.max(prev - 1, 0));
-                   }}
-                   className="w-full"
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                       key={testimonialIndex}
-                       initial={{ opacity: 0, scale: 0.95 }}
-                       animate={{ opacity: 1, scale: 1 }}
-                       exit={{ opacity: 0, scale: 0.95 }}
-                       className="bg-white p-2 sm:p-12   rounded-[0.5rem] border border-gray-100 shadow-[0_10px_50px_rgba(0,0,0,0.03)] flex flex-col items-center text-center space-y-8"
-                    >
-                       {/* Centered Avatar */}
-                       <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
-                          <img 
-                             src={testimonialsData[testimonialIndex].image} 
-                             alt={testimonialsData[testimonialIndex].author}
-                             className="w-full h-full object-cover"
-                          />
-                       </div>
-                       
-                       <p className="text-gray-600 font-medium text-lg leading-relaxed max-w-lg">
-                          "{testimonialsData[testimonialIndex].text}"
-                       </p>
-                       
-                       {/* Footer */}
-                       <div className="w-full flex items-end justify-between border-t border-gray-50">
-                          <div className="text-left">
-                             <div className="font-black text-gray-950 text-xl tracking-tight">{testimonialsData[testimonialIndex].author}</div>
-                             <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">{testimonialsData[testimonialIndex].location}</div>
-                          </div>
-                          <LucideIcons.Quote size={48} className="text-gray-100 fill-gray-50 transform rotate-180" />
-                       </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </motion.div>
-                
-                {/* Dots */}
-                <div className="flex justify-center gap-3 mt-10">
-                  {testimonialsData.map((_, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => setTestimonialIndex(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${testimonialIndex === i ? "w-10 bg-gray-900" : "w-2 bg-gray-200"}`} 
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              /* Desktop Layout: Showing a grid or keep the slider? Let's use a nice centered card slider for desktop as well to match the "one at a time" focus */
-              <div className="relative group">
-                 <AnimatePresence mode="wait">
-                    <motion.div
-                       key={testimonialIndex}
-                       initial={{ opacity: 0, x: 50 }}
-                       animate={{ opacity: 1, x: 0 }}
-                       exit={{ opacity: 0, x: -50 }}
-                       className="bg-white p-12 sm:p-20 rounded-[4rem] border border-gray-100 shadow-[0_20px_80px_rgba(0,0,0,0.04)] flex flex-col items-center text-center space-y-10"
-                    >
-                       <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-2xl border-8 border-white group-hover:scale-105 transition-transform duration-500">
-                          <img 
-                             src={testimonialsData[testimonialIndex].image} 
-                             alt={testimonialsData[testimonialIndex].author}
-                             className="w-full h-full object-cover"
-                          />
-                       </div>
-                       
-                       <p className="text-gray-600 font-medium text-xl sm:text-2xl italic leading-relaxed max-w-2xl">
-                          "{testimonialsData[testimonialIndex].text}"
-                       </p>
-                       
-                       <div className="w-full flex items-end justify-between pt-10 border-t border-gray-50">
-                          <div className="text-left">
-                             <div className="font-black text-gray-950 text-2xl tracking-tighter">{testimonialsData[testimonialIndex].author}</div>
-                             <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-2 italic">{testimonialsData[testimonialIndex].location}</div>
-                          </div>
-                          <LucideIcons.Quote size={80} className="text-gray-100 fill-gray-50 transform rotate-180" />
-                       </div>
-                    </motion.div>
-                 </AnimatePresence>
-                 
-                 {/* Navigation Buttons for Desktop */}
-                 <button 
-                    onClick={() => setTestimonialIndex(prev => (prev === 0 ? testimonialsData.length - 1 : prev - 1))}
-                    className="absolute left-[-100px] top-1/2 -translate-y-1/2 p-5 rounded-full bg-white border border-gray-100 text-gray-400 hover:text-gray-900 shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-500 hover:-translate-x-2"
-                 >
-                    <LucideIcons.ChevronLeft size={32} />
-                 </button>
-                 <button 
-                    onClick={() => setTestimonialIndex(prev => (prev === testimonialsData.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-[-100px] top-1/2 -translate-y-1/2 p-5 rounded-full bg-white border border-gray-100 text-gray-400 hover:text-gray-900 shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-500 hover:translate-x-2"
-                 >
-                    <LucideIcons.ChevronRight size={32} />
-                 </button>
-              </div>
-            )}
+         <div className="relative mt-14 px-4">
+            <div className="absolute inset-y-0 left-0 w-20 sm:w-40 bg-gradient-to-r from-white via-white/95 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-20 sm:w-40 bg-gradient-to-l from-white via-white/95 to-transparent z-10 pointer-events-none" />
+
+            <motion.div
+               animate={{ x: ["0%", "-50%"] }}
+               transition={{
+                  duration: 42,
+                  ease: "linear",
+                  repeat: Infinity,
+               }}
+               className="flex w-max gap-4 sm:gap-5 will-change-transform"
+            >
+               {[...testimonialsData, ...testimonialsData].map((testimonial, index) => (
+                  <article
+                     key={`${testimonial.author}-${index}`}
+                     className="group relative flex-shrink-0 w-[240px] sm:w-[260px] lg:w-[280px] xl:w-[300px]"
+                  >
+                     <div className="h-full rounded-[1.5rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_12px_40px_rgba(15,23,42,0.05)] transition-transform duration-300 group-hover:-translate-y-1">
+                        <div className="mb-4 flex items-start gap-3">
+                           <div className="h-10 w-10 sm:h-12 sm:w-12 overflow-hidden rounded-xl border-3 border-white shadow-md shadow-gray-200/60">
+                              <img
+                                 src={testimonial.image}
+                                 alt={testimonial.author}
+                                 className="h-full w-full object-cover"
+                              />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <div className="font-black text-gray-950 text-base sm:text-lg tracking-tight leading-none">
+                                 {testimonial.author}
+                              </div>
+                              <div className="mt-1 text-[10px] sm:text-xs font-black uppercase tracking-[0.24em] text-gray-400">
+                                 {testimonial.location}
+                              </div>
+                              <div className="mt-2 flex items-center gap-0.5 text-amber-400">
+                                 {[...Array(5)].map((_, starIndex) => (
+                                    <LucideIcons.Star key={starIndex} size={12} fill="currentColor" />
+                                 ))}
+                              </div>
+                           </div>
+                           <LucideIcons.Quote size={20} className="text-gray-100 fill-gray-50 shrink-0" />
+                        </div>
+
+                        <p className="text-xs sm:text-sm leading-6 sm:leading-7 text-gray-600 italic">
+                           "{testimonial.text}"
+                        </p>
+                     </div>
+                  </article>
+               ))}
+            </motion.div>
          </div>
       </section>
 
