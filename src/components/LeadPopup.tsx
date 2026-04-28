@@ -138,7 +138,6 @@ const LeadPopup = ({ isOpen: controlledIsOpen, onClose: controlledOnClose, initi
     name: "",
     phone: "",
     email: "",
-    serviceType: "",
     category: "",
     service: "",
     servicePlan: "Standard",
@@ -156,7 +155,6 @@ const LeadPopup = ({ isOpen: controlledIsOpen, onClose: controlledOnClose, initi
     if (isOpen && initialData) {
       setFormData(prev => ({
         ...prev,
-        serviceType: initialData.serviceType || prev.serviceType,
         category: initialData.category || prev.category,
         service: initialData.service || prev.service,
       }));
@@ -230,11 +228,6 @@ const LeadPopup = ({ isOpen: controlledIsOpen, onClose: controlledOnClose, initi
     fetchSubServices();
   }, [formData.category, categories]);
 
-  const serviceTypes = [
-    { label: "Home Repair", value: "HOME" },
-    { label: "Appliances Repair", value: "APPLIANCE" }
-  ];
-
   useEffect(() => {
     (window as any).showLeadPopup = () => setOpenState(true);
 
@@ -272,7 +265,6 @@ const LeadPopup = ({ isOpen: controlledIsOpen, onClose: controlledOnClose, initi
             newErrors.email = "Enter a valid email address";
         }
     } else if (step === 2) {
-        if (!formData.serviceType) newErrors.serviceType = "Please select a service type";
         if (!formData.category) newErrors.category = "Please select a category";
         if (!formData.service) newErrors.service = "Please select a specific service";
     } else if (step === 3) {
@@ -437,26 +429,12 @@ const LeadPopup = ({ isOpen: controlledIsOpen, onClose: controlledOnClose, initi
                         className="space-y-5"
                       >
                         <Select 
-                            label="Service Type"
-                            options={serviceTypes}
-                            value={formData.serviceType}
-                            onChange={(e: any) => setFormData({...formData, serviceType: e.target.value, category: "", service: ""})}
-                            error={errors.serviceType}
-                            placeholder="Select service type"
-                            required
-                        />
-
-                        <Select 
                             label="Category"
-                            options={categories
-                                .filter(c => c.category === formData.serviceType)
-                                .map(cat => ({ label: cat.name, value: cat.name }))
-                            }
+                            options={categories.map(cat => ({ label: cat.name, value: cat.name }))}
                             value={formData.category}
                             onChange={(e: any) => setFormData({...formData, category: e.target.value, service: ""})}
-                            disabled={!formData.serviceType}
                             error={errors.category}
-                            placeholder={formData.serviceType ? "Select category" : "First select service type"}
+                            placeholder="Select category"
                             required
                         />
 
@@ -473,6 +451,17 @@ const LeadPopup = ({ isOpen: controlledIsOpen, onClose: controlledOnClose, initi
                             placeholder={fetchingServices ? "Loading services..." : "Select exact service"}
                             required
                         />
+
+                        {formData.price && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -5 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            className="flex items-center justify-between p-4 bg-blue-50/50 border border-blue-100 rounded-lg mt-2"
+                          >
+                            <span className="text-sm font-semibold text-blue-900">Estimated Price</span>
+                            <span className="text-lg font-bold text-blue-700">₹{formData.price}</span>
+                          </motion.div>
+                        )}
 
                         <div className="flex gap-3 pt-2">
                           <SecondaryButton onClick={prevStep} type="button" className="flex-1">

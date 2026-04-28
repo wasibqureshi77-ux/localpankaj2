@@ -214,7 +214,7 @@ export default function ServicePage({ params }: { params: Promise<{ slug: string
 
       {/* Product Inventory */}
       <section className="py-16 sm:py-24 bg-gray-50/50">
-         <div className="max-w-[1240px] mx-auto px-5 space-y-24">
+         <div className="max-w-[1240px] mx-auto px-2 space-y-24">
             
             <InventorySection 
               id="section-service"
@@ -281,7 +281,7 @@ const InventorySection = ({ id, tag, title, desc, products, onAdd }: any) => (
 );
 
 const ProductCard = ({ product, onAdd }: any) => (
-  <div className="bg-white border border-gray-200 rounded-3xl p-3 flex items-start justify-between group transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50">
+  <div className="bg-white border border-gray-200 p-3 flex items-start justify-between group transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50">
      <div className="flex-1 space-y-4 pr-4">
         <div className="space-y-1">
            <h4 className="text-[16px] sm:text-[16px] font-bold text-gray-900 leading-tight">
@@ -298,7 +298,7 @@ const ProductCard = ({ product, onAdd }: any) => (
      </div>
 
      <div className="relative flex-shrink-0">
-        <div className="w-28 h-20 sm:w-40 sm:h-28 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group-hover:shadow-lg transition-shadow duration-300">
+        <div className="w-[110px] h-[150px] sm:w-40 sm:h-28 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group-hover:shadow-lg transition-shadow duration-300">
            {product.image ? (
               <Image 
                 src={product.image} 

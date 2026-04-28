@@ -62,7 +62,14 @@ const Footer = () => {
           <ul className="space-y-4 font-medium">
             <li className="flex items-start space-x-3">
               <MapPin className="text-blue-500 shrink-0 mt-1" size={18} />
-              <span>Aastha Pride, Police Station, Plot No 69, Skit College Rd, near Ram Nagariya, Jagatpura, Jaipur, Rajasthan 302017</span>
+              <a 
+                href="https://share.google/RFItqoQXmB3bDykWD"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-500 transition-colors cursor-pointer"
+              >
+                Aastha Pride, Police Station, Plot No 69, Skit College Rd, near Ram Nagariya, Jagatpura, Jaipur, Rajasthan 302017
+              </a>
             </li>
             <li className="flex items-center space-x-3">
               <Phone className="text-blue-500 shrink-0" size={18} />

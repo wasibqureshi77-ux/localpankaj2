@@ -94,7 +94,7 @@ export default function Header() {
                 </div>
               </div>
 
-              <DesktopNavLink href="/blog" label="Journal" active={pathname === "/blog"} />
+              <DesktopNavLink href="/our-work" label="Our Work" active={pathname === "/our-work"} />
               <DesktopNavLink href="/contact" label="Contact" active={pathname === "/contact"} />
             </nav>
           </div>
@@ -106,7 +106,7 @@ export default function Header() {
                 <img
                   src={config.logo}
                   alt="Local Pankaj"
-                  className="h-10 sm:h-16 lg:h-[130px] w-auto object-contain transition-transform hover:scale-105"
+                  className="h-[70px] sm:h-16 lg:h-[130px] w-auto object-contain transition-transform hover:scale-105"
                 />
               ) : (
                 <span className="text-xl sm:text-2xl font-extrabold text-gray-900">
@@ -197,7 +197,7 @@ export default function Header() {
                 )}
              </div>
 
-             <MobileNavLink href="/blog" label="Blog" active={pathname === "/blog"} onClick={() => setIsMenuOpen(false)} />
+             <MobileNavLink href="/our-work" label="Our Work" active={pathname === "/our-work"} onClick={() => setIsMenuOpen(false)} />
              <MobileNavLink href="/contact" label="Contact" active={pathname === "/contact"} onClick={() => setIsMenuOpen(false)} />
 
             <div className="pt-6 mt-4 border-t border-gray-100">
