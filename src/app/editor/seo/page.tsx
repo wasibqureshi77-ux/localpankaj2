@@ -11,6 +11,7 @@ import {
   Facebook,
   Twitter,
   Instagram,
+  Youtube,
   Mail,
   Smartphone,
   Info
@@ -26,7 +27,8 @@ export default function SEOEditor() {
     keywords: "AC repair jaipur, ro repair jaipur, house cleaning jaipur",
     facebookUrl: "",
     instagramUrl: "",
-    twitterUrl: ""
+    twitterUrl: "",
+    youtubeUrl: ""
   });
 
   useEffect(() => {
@@ -156,6 +158,12 @@ export default function SEOEditor() {
                     label="Twitter / X" 
                     value={config.twitterUrl} 
                     onChange={(v: string) => setConfig({...config, twitterUrl: v})}
+                  />
+                  <SocialInput 
+                    icon={<Youtube size={18}/>} 
+                    label="YouTube Channel" 
+                    value={config.youtubeUrl} 
+                    onChange={(v: string) => setConfig({...config, youtubeUrl: v})}
                   />
                </div>
             </div>
